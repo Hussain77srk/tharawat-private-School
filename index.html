@@ -1,0 +1,2961 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة النقل المدرسي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f0ff',
+                            100: '#e1e0ff',
+                            200: '#c7c6fe',
+                            300: '#a5a4fd',
+                            400: '#8483fb',
+                            500: '#6b6af9',
+                            600: '#5D5CDE',
+                            700: '#4a49b9',
+                            800: '#3d3c96',
+                            900: '#343378',
+                            950: '#1f1e45'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Tajawal', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+        
+        body {
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        .dark body {
+            background-color: #181818;
+            color: #f3f4f6;
+        }
+        
+        /* Transition effects */
+        .fade-enter {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        
+        .fade-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 300ms, transform 300ms;
+        }
+        
+        /* Table styles */
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .data-table th, .data-table td {
+            padding: 0.75rem;
+            text-align: right;
+            border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+        }
+        
+        .data-table th {
+            background-color: #5D5CDE;
+            color: white;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .dark .data-table th {
+            background-color: #4b4aa7;
+        }
+        
+        .data-table tr {
+            transition: background-color 0.2s ease;
+        }
+        
+        .data-table tr:hover {
+            background-color: rgba(243, 244, 246, 0.5);
+        }
+        
+        .dark .data-table tr:hover {
+            background-color: rgba(55, 65, 81, 0.3);
+        }
+        
+        .data-table tr:nth-child(even) {
+            background-color: rgba(243, 244, 246, 0.3);
+        }
+        
+        .dark .data-table tr:nth-child(even) {
+            background-color: rgba(45, 45, 45, 0.5);
+        }
+        
+        .dark .data-table tr:nth-child(odd) {
+            background-color: rgba(34, 34, 34, 0.8);
+        }
+        
+        /* Notification badge */
+        .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            padding: 3px 6px;
+            border-radius: 50%;
+            background-color: #ef4444;
+            color: white;
+            font-size: 0.7rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Input styling */
+        input, select {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            width: 100%;
+            transition: all 0.2s ease;
+            background-color: white;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #5D5CDE;
+            box-shadow: 0 0 0 3px rgba(93, 92, 222, 0.2);
+        }
+        
+        .dark input, .dark select {
+            background-color: #2d2d2d;
+            border-color: #4b4b4b;
+            color: white;
+        }
+        
+        .dark input:focus, .dark select:focus {
+            border-color: #6b6af9;
+            box-shadow: 0 0 0 3px rgba(93, 92, 222, 0.3);
+        }
+        
+        button {
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button:after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+        
+        button:focus:not(:active)::after {
+            animation: ripple 0.8s ease-out;
+        }
+        
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20);
+                opacity: 0;
+            }
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .dark ::-webkit-scrollbar-track {
+            background: #2d2d2d;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #5D5CDE;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4a49b9;
+        }
+        
+        /* Card hover effects */
+        .hover-card {
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        
+        .hover-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(0, 0, 0, 0.07);
+        }
+        
+        .dark .hover-card:hover {
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4), 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Loading pulse animation */
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900 z-50">
+            <div class="text-center">
+                <div class="w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <p class="mt-4 text-xl font-medium">جاري التحميل...</p>
+            </div>
+        </div>
+
+        <!-- Login Page -->
+        <div id="login-page" class="hidden flex-grow flex items-center justify-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md transform transition-all duration-300 scale-100">
+                <div class="text-center mb-8">
+                    <div class="inline-block p-3 bg-primary-50 dark:bg-primary-900 rounded-full mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                    </div>
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">نظام إدارة النقل المدرسي</h1>
+                    <p class="text-gray-500 dark:text-gray-400 mt-2">قم بتسجيل الدخول للوصول إلى لوحة التحكم</p>
+                </div>
+                <div class="mb-6">
+                    <label for="username" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">اسم المستخدم</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <input type="text" id="username" class="text-base pr-10" placeholder="أدخل اسم المستخدم">
+                    </div>
+                </div>
+                <div class="mb-8">
+                    <label for="password" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">كلمة المرور</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <input type="password" id="password" class="text-base pr-10" placeholder="أدخل كلمة المرور">
+                    </div>
+                </div>
+                <button id="login-btn" class="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-lg font-medium text-base transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    تسجيل الدخول
+                </button>
+                <p id="login-error" class="text-red-500 mt-4 text-center hidden bg-red-50 dark:bg-red-900/20 p-2 rounded"></p>
+            </div>
+        </div>
+
+        <!-- Transport Officer Dashboard -->
+        <div id="transport-dashboard" class="hidden flex-grow flex flex-col">
+            <header class="bg-primary-600 text-white p-4 shadow-md relative z-20">
+                <div class="container mx-auto flex justify-between items-center">
+                    <div class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                        </svg>
+                        <h1 class="text-xl font-bold">لوحة تحكم مسؤول النقل</h1>
+                    </div>
+                    <div class="flex items-center space-x-4 space-x-reverse">
+                        <span id="notification-badge" class="relative cursor-pointer hidden" title="الإشعارات">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v0.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                            <span id="notification-count" class="badge">0</span>
+                        </span>
+                        <span id="sync-status" class="text-sm hidden">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            <span>مزامنة...</span>
+                        </span>
+                        <button id="logout-btn" class="px-4 py-2 bg-white text-primary-600 rounded-lg hover:bg-gray-100 font-medium shadow-sm">تسجيل الخروج</button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="container mx-auto flex-grow p-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <button id="students-btn" class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover-card text-lg font-medium text-primary-600 border-2 border-primary-200 dark:border-primary-900 flex flex-col items-center justify-center h-28">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        الطلاب المسموح لهم
+                    </button>
+                    <button id="supervisors-btn" class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover-card text-lg font-medium text-primary-600 border-2 border-primary-200 dark:border-primary-900 flex flex-col items-center justify-center h-28">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        تقرير المشرفات
+                    </button>
+                    <button id="drivers-btn" class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover-card text-lg font-medium text-primary-600 border-2 border-primary-200 dark:border-primary-900 flex flex-col items-center justify-center h-28">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        تقرير السائقين
+                    </button>
+                    <button id="buses-btn" class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover-card text-lg font-medium text-primary-600 border-2 border-primary-200 dark:border-primary-900 flex flex-col items-center justify-center h-28">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                        </svg>
+                        تقرير الحافلات
+                    </button>
+                </div>
+
+                <!-- Students Section -->
+                <div id="students-section" class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 hidden">
+                    <h2 class="text-xl font-bold mb-4 border-r-4 border-primary-500 pr-3">الطلاب المسموح لهم بركوب الباص</h2>
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                        <div class="flex flex-wrap gap-2">
+                            <button id="import-students-excel" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                                </svg>
+                                استيراد ملف Excel
+                            </button>
+                            <button id="export-students-excel" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                                </svg>
+                                تصدير إلى Excel
+                            </button>
+                        </div>
+                        <div class="text-lg font-medium flex items-center">
+                            <span class="bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 py-1 px-3 rounded-full flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                إجمالي الطلاب: <span id="student-count" class="font-bold">0</span>
+                            </span>
+                        </div>
+                    </div>
+                    <input type="file" id="student-excel-file" class="hidden" accept=".xlsx, .xls">
+                    <div class="overflow-x-auto mt-4 max-h-[65vh] overflow-y-auto rounded-lg shadow">
+                        <table id="students-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th class="rounded-tr-lg">الرقم</th>
+                                    <th>اسم الطالب</th>
+                                    <th>الصف</th>
+                                    <th>رقم الحافلة</th>
+                                    <th class="rounded-tl-lg">المنطقة</th>
+                                </tr>
+                            </thead>
+                            <tbody id="students-table-body">
+                                <!-- Student data will be populated here -->
+                                <tr id="students-loading-row">
+                                    <td colspan="5" class="text-center py-8">
+                                        <div class="animate-pulse flex justify-center items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                            </svg>
+                                            <span class="mr-3 text-lg">جاري تحميل البيانات...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Supervisors Section -->
+                <div id="supervisors-section" class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 hidden">
+                    <h2 class="text-xl font-bold mb-4 border-r-4 border-primary-500 pr-3">تقرير المشرفات</h2>
+                    
+                    <div class="mb-6 bg-gray-50 dark:bg-gray-700/50 p-5 rounded-lg shadow-sm">
+                        <h3 class="text-lg font-medium mb-3 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            إضافة / تعديل مشرفة
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">رقم التصريح</label>
+                                <input type="text" id="supervisor-id" class="text-base">
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">اسم المشرفة</label>
+                                <input type="text" id="supervisor-name" class="text-base">
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">الجنس</label>
+                                <select id="supervisor-gender" class="text-base">
+                                    <option value="أنثى">أنثى</option>
+                                    <option value="ذكر">ذكر</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">تاريخ انتهاء التصريح</label>
+                                <input type="date" id="supervisor-permit-expiry" class="text-base">
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">تاريخ انتهاء العقد</label>
+                                <input type="date" id="supervisor-contract-expiry" class="text-base">
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button id="add-supervisor" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                إضافة
+                            </button>
+                            <button id="update-supervisor" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 hidden flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                تحديث
+                            </button>
+                            <button id="cancel-supervisor-edit" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 hidden flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                إلغاء
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                        <div class="flex flex-wrap gap-2">
+                            <button id="import-supervisors-excel" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                                </svg>
+                                استيراد ملف Excel
+                            </button>
+                            <button id="export-supervisors-excel" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                                </svg>
+                                تصدير إلى Excel
+                            </button>
+                        </div>
+                        <div class="w-full md:w-1/3 relative">
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                            <input type="text" id="search-supervisors" class="text-base pr-10" placeholder="بحث...">
+                        </div>
+                    </div>
+                    <input type="file" id="supervisor-excel-file" class="hidden" accept=".xlsx, .xls">
+                    
+                    <div class="overflow-x-auto mt-4 max-h-[65vh] overflow-y-auto rounded-lg shadow">
+                        <table id="supervisors-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th class="rounded-tr-lg">رقم التصريح</th>
+                                    <th>اسم المشرفة</th>
+                                    <th>الجنس</th>
+                                    <th>تاريخ انتهاء التصريح</th>
+                                    <th>تاريخ انتهاء العقد</th>
+                                    <th>الحالة</th>
+                                    <th class="rounded-tl-lg">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="supervisors-table-body">
+                                <!-- Supervisors data will be populated here -->
+                                <tr id="supervisors-loading-row">
+                                    <td colspan="7" class="text-center py-8">
+                                        <div class="animate-pulse flex justify-center items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                            </svg>
+                                            <span class="mr-3 text-lg">جاري تحميل البيانات...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Drivers Section -->
+                <div id="drivers-section" class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 hidden">
+                    <h2 class="text-xl font-bold mb-4 border-r-4 border-primary-500 pr-3">تقرير السائقين</h2>
+                    
+                    <div class="mb-6 bg-gray-50 dark:bg-gray-700/50 p-5 rounded-lg shadow-sm">
+                        <h3 class="text-lg font-medium mb-3 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            إضافة / تعديل سائق
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">رقم التصريح</label>
+                                <input type="text" id="driver-id" class="text-base">
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">اسم السائق</label>
+                                <input type="text" id="driver-name" class="text-base">
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">الجنس</label>
+                                <select id="driver-gender" class="text-base">
+                                    <option value="ذكر">ذكر</option>
+                                    <option value="أنثى">أنثى</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">تاريخ انتهاء التصريح</label>
+                                <input type="date" id="driver-permit-expiry" class="text-base">
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">تاريخ انتهاء العقد</label>
+                                <input type="date" id="driver-contract-expiry" class="text-base">
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button id="add-driver" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                إضافة
+                            </button>
+                            <button id="update-driver" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 hidden flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                تحديث
+                            </button>
+                            <button id="cancel-driver-edit" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 hidden flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                إلغاء
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                        <div class="flex flex-wrap gap-2">
+                            <button id="import-drivers-excel" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                                </svg>
+                                استيراد ملف Excel
+                            </button>
+                            <button id="export-drivers-excel" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                                </svg>
+                                تصدير إلى Excel
+                            </button>
+                        </div>
+                        <div class="w-full md:w-1/3 relative">
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                            <input type="text" id="search-drivers" class="text-base pr-10" placeholder="بحث...">
+                        </div>
+                    </div>
+                    <input type="file" id="driver-excel-file" class="hidden" accept=".xlsx, .xls">
+                    
+                    <div class="overflow-x-auto mt-4 max-h-[65vh] overflow-y-auto rounded-lg shadow">
+                        <table id="drivers-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th class="rounded-tr-lg">رقم التصريح</th>
+                                    <th>اسم السائق</th>
+                                    <th>الجنس</th>
+                                    <th>تاريخ انتهاء التصريح</th>
+                                    <th>تاريخ انتهاء العقد</th>
+                                    <th>الحالة</th>
+                                    <th class="rounded-tl-lg">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="drivers-table-body">
+                                <!-- Drivers data will be populated here -->
+                                <tr id="drivers-loading-row">
+                                    <td colspan="7" class="text-center py-8">
+                                        <div class="animate-pulse flex justify-center items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                            </svg>
+                                            <span class="mr-3 text-lg">جاري تحميل البيانات...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Buses Section -->
+                <div id="buses-section" class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 hidden">
+                    <h2 class="text-xl font-bold mb-4 border-r-4 border-primary-500 pr-3">تقرير الحافلات</h2>
+                    
+                    <div class="mb-6 bg-gray-50 dark:bg-gray-700/50 p-5 rounded-lg shadow-sm">
+                        <h3 class="text-lg font-medium mb-3 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            إضافة / تعديل حافلة
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">رقم الحافلة</label>
+                                <input type="text" id="bus-id" class="text-base">
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">رقم DOT</label>
+                                <input type="text" id="bus-dot" class="text-base">
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">تاريخ انتهاء التصريح</label>
+                                <input type="date" id="bus-permit-expiry" class="text-base">
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button id="add-bus" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                إضافة
+                            </button>
+                            <button id="update-bus" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 hidden flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                تحديث
+                            </button>
+                            <button id="cancel-bus-edit" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 hidden flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                إلغاء
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                        <div class="flex flex-wrap gap-2">
+                            <button id="import-buses-excel" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                                </svg>
+                                استيراد ملف Excel
+                            </button>
+                            <button id="export-buses-excel" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                                </svg>
+                                تصدير إلى Excel
+                            </button>
+                        </div>
+                        <div class="w-full md:w-1/3 relative">
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                            <input type="text" id="search-buses" class="text-base pr-10" placeholder="بحث...">
+                        </div>
+                    </div>
+                    <input type="file" id="bus-excel-file" class="hidden" accept=".xlsx, .xls">
+                    
+                    <div class="overflow-x-auto mt-4 max-h-[65vh] overflow-y-auto rounded-lg shadow">
+                        <table id="buses-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th class="rounded-tr-lg">رقم الحافلة</th>
+                                    <th>رقم DOT</th>
+                                    <th>تاريخ انتهاء التصريح</th>
+                                    <th>الحالة</th>
+                                    <th class="rounded-tl-lg">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="buses-table-body">
+                                <!-- Buses data will be populated here -->
+                                <tr id="buses-loading-row">
+                                    <td colspan="5" class="text-center py-8">
+                                        <div class="animate-pulse flex justify-center items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                            </svg>
+                                            <span class="mr-3 text-lg">جاري تحميل البيانات...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manager Dashboard -->
+        <div id="manager-dashboard" class="hidden flex-grow flex flex-col">
+            <header class="bg-primary-600 text-white p-4 shadow-md relative z-20">
+                <div class="container mx-auto flex justify-between items-center">
+                    <div class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        <h1 class="text-xl font-bold">لوحة تحكم المدير</h1>
+                    </div>
+                    <div class="flex items-center space-x-4 space-x-reverse">
+                        <span id="manager-sync-status" class="text-sm hidden">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            <span>مزامنة...</span>
+                        </span>
+                        <button id="manager-logout-btn" class="px-4 py-2 bg-white text-primary-600 rounded-lg hover:bg-gray-100 font-medium shadow-sm">تسجيل الخروج</button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="container mx-auto flex-grow p-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <button id="manager-students-btn" class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover-card text-lg font-medium text-primary-600 border-2 border-primary-200 dark:border-primary-900 flex flex-col items-center justify-center h-28">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        الطلاب المسموح لهم
+                    </button>
+                    <button id="manager-supervisors-btn" class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover-card text-lg font-medium text-primary-600 border-2 border-primary-200 dark:border-primary-900 flex flex-col items-center justify-center h-28">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        تقرير المشرفات
+                    </button>
+                    <button id="manager-drivers-btn" class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover-card text-lg font-medium text-primary-600 border-2 border-primary-200 dark:border-primary-900 flex flex-col items-center justify-center h-28">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        تقرير السائقين
+                    </button>
+                    <button id="manager-buses-btn" class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover-card text-lg font-medium text-primary-600 border-2 border-primary-200 dark:border-primary-900 flex flex-col items-center justify-center h-28">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                        </svg>
+                        تقرير الحافلات
+                    </button>
+                </div>
+
+                <!-- Manager Students View -->
+                <div id="manager-students-section" class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 hidden">
+                    <h2 class="text-xl font-bold mb-4 border-r-4 border-primary-500 pr-3">الطلاب المسموح لهم بركوب الباص</h2>
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="text-lg font-medium flex items-center">
+                            <span class="bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 py-1 px-3 rounded-full flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                إجمالي الطلاب: <span id="manager-student-count" class="font-bold">0</span>
+                            </span>
+                        </div>
+                        <button id="manager-export-students" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                            </svg>
+                            تصدير إلى Excel
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto mt-4 max-h-[65vh] overflow-y-auto rounded-lg shadow">
+                        <table id="manager-students-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th class="rounded-tr-lg">الرقم</th>
+                                    <th>اسم الطالب</th>
+                                    <th>الصف</th>
+                                    <th>رقم الحافلة</th>
+                                    <th class="rounded-tl-lg">المنطقة</th>
+                                </tr>
+                            </thead>
+                            <tbody id="manager-students-table-body">
+                                <!-- Student data will be populated here -->
+                                <tr id="manager-students-loading-row">
+                                    <td colspan="5" class="text-center py-8">
+                                        <div class="animate-pulse flex justify-center items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                            </svg>
+                                            <span class="mr-3 text-lg">جاري تحميل البيانات...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Manager Supervisors View -->
+                <div id="manager-supervisors-section" class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 hidden">
+                    <h2 class="text-xl font-bold mb-4 border-r-4 border-primary-500 pr-3">تقرير المشرفات</h2>
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="text-lg font-medium flex items-center">
+                            <span class="bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 py-1 px-3 rounded-full flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                إجمالي المشرفات: <span id="manager-supervisor-count" class="font-bold">0</span>
+                            </span>
+                        </div>
+                        <button id="manager-export-supervisors" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                            </svg>
+                            تصدير إلى Excel
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto mt-4 max-h-[65vh] overflow-y-auto rounded-lg shadow">
+                        <table id="manager-supervisors-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th class="rounded-tr-lg">رقم التصريح</th>
+                                    <th>اسم المشرفة</th>
+                                    <th>الجنس</th>
+                                    <th>تاريخ انتهاء التصريح</th>
+                                    <th>تاريخ انتهاء العقد</th>
+                                    <th class="rounded-tl-lg">الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody id="manager-supervisors-table-body">
+                                <!-- Supervisors data will be populated here -->
+                                <tr id="manager-supervisors-loading-row">
+                                    <td colspan="6" class="text-center py-8">
+                                        <div class="animate-pulse flex justify-center items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                            </svg>
+                                            <span class="mr-3 text-lg">جاري تحميل البيانات...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Manager Drivers View -->
+                <div id="manager-drivers-section" class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 hidden">
+                    <h2 class="text-xl font-bold mb-4 border-r-4 border-primary-500 pr-3">تقرير السائقين</h2>
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="text-lg font-medium flex items-center">
+                            <span class="bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 py-1 px-3 rounded-full flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                إجمالي السائقين: <span id="manager-driver-count" class="font-bold">0</span>
+                            </span>
+                        </div>
+                        <button id="manager-export-drivers" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                            </svg>
+                            تصدير إلى Excel
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto mt-4 max-h-[65vh] overflow-y-auto rounded-lg shadow">
+                        <table id="manager-drivers-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th class="rounded-tr-lg">رقم التصريح</th>
+                                    <th>اسم السائق</th>
+                                    <th>الجنس</th>
+                                    <th>تاريخ انتهاء التصريح</th>
+                                    <th>تاريخ انتهاء العقد</th>
+                                    <th class="rounded-tl-lg">الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody id="manager-drivers-table-body">
+                                <!-- Drivers data will be populated here -->
+                                <tr id="manager-drivers-loading-row">
+                                    <td colspan="6" class="text-center py-8">
+                                        <div class="animate-pulse flex justify-center items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                            </svg>
+                                            <span class="mr-3 text-lg">جاري تحميل البيانات...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Manager Buses View -->
+                <div id="manager-buses-section" class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 hidden">
+                    <h2 class="text-xl font-bold mb-4 border-r-4 border-primary-500 pr-3">تقرير الحافلات</h2>
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="text-lg font-medium flex items-center">
+                            <span class="bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 py-1 px-3 rounded-full flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                                </svg>
+                                إجمالي الحافلات: <span id="manager-bus-count" class="font-bold">0</span>
+                            </span>
+                        </div>
+                        <button id="manager-export-buses" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                            </svg>
+                            تصدير إلى Excel
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto mt-4 max-h-[65vh] overflow-y-auto rounded-lg shadow">
+                        <table id="manager-buses-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th class="rounded-tr-lg">رقم الحافلة</th>
+                                    <th>رقم DOT</th>
+                                    <th>تاريخ انتهاء التصريح</th>
+                                    <th class="rounded-tl-lg">الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody id="manager-buses-table-body">
+                                <!-- Buses data will be populated here -->
+                                <tr id="manager-buses-loading-row">
+                                    <td colspan="4" class="text-center py-8">
+                                        <div class="animate-pulse flex justify-center items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                            </svg>
+                                            <span class="mr-3 text-lg">جاري تحميل البيانات...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Modal -->
+        <div id="notifications-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg m-4 max-h-[80vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">الإشعارات</h3>
+                    <button id="close-notifications" class="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div id="notifications-list" class="space-y-2">
+                    <!-- Notifications will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div id="toast" class="fixed bottom-4 right-4 z-50 bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 max-w-xs flex items-center">
+            <svg id="toast-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span id="toast-message"></span>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode initialization
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDSyRW6qP8SlD6IEEl6ZizTAqb7LceVaqM",
+            authDomain: "thrawat-777c9.firebaseapp.com",
+            databaseURL: "https://thrawat-777c9-default-rtdb.firebaseio.com",
+            projectId: "thrawat-777c9",
+            storageBucket: "thrawat-777c9.firebasestorage.app",
+            messagingSenderId: "427206651080",
+            appId: "1:427206651080:web:d648161e081a89d0be89fd",
+            measurementId: "G-CT619NSQ18"
+          
+        };
+        
+        // Initialize Firebase with demo project
+        firebase.initializeApp(firebaseConfig);
+        
+        // References
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        // Collections references
+        const studentsRef = db.collection('students');
+        const supervisorsRef = db.collection('supervisors');
+        const driversRef = db.collection('drivers');
+        const busesRef = db.collection('buses');
+        const notificationsRef = db.collection('notifications');
+        
+        // Global notifications array
+        let notifications = [];
+        
+        // Utility Functions
+        /**
+         * Formatea una fecha para mostrarla en formato Gregoriano (DD/MM/YYYY)
+         * @param {string} dateString - Fecha en formato string
+         * @returns {string} - Fecha formateada o string vacío si no hay fecha
+         */
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const options = { year: 'numeric', month: 'numeric', day: 'numeric' };
+            // Usamos formato Gregoriano en lugar de Hijri, manteniendo el idioma árabe
+            return new Date(dateString).toLocaleDateString('ar', options);
+        }
+        
+        /**
+         * Muestra una notificación tipo toast en la interfaz
+         * @param {string} message - Mensaje a mostrar
+         * @param {string} type - Tipo de mensaje (success, error, warning, info)
+         */
+        function showToast(message, type = "success") {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toast-icon');
+            document.getElementById('toast-message').textContent = message;
+            
+            // Set color and icon based on type
+            if (type === "success") {
+                toast.className = toast.className.replace(/bg-\w+-\d+/g, 'bg-green-500');
+                toastIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />';
+            } else if (type === "error") {
+                toast.className = toast.className.replace(/bg-\w+-\d+/g, 'bg-red-500');
+                toastIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />';
+            } else if (type === "warning") {
+                toast.className = toast.className.replace(/bg-\w+-\d+/g, 'bg-yellow-500');
+                toastIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />';
+            } else if (type === "info") {
+                toast.className = toast.className.replace(/bg-\w+-\d+/g, 'bg-blue-500');
+                toastIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />';
+            }
+            
+            // Show the toast
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 5000);
+        }
+        
+        /**
+         * Verifica el estado de validez de un item basado en fechas de expiración
+         * @param {string} permitExpiry - Fecha de expiración del permiso
+         * @param {string} contractExpiry - Fecha de expiración del contrato (opcional)
+         * @returns {Object} - Estado y clase CSS correspondiente
+         */
+        function checkItemStatus(permitExpiry, contractExpiry = null) {
+            const today = new Date();
+            const oneMonthLater = new Date();
+            oneMonthLater.setMonth(today.getMonth() + 1);
+            
+            const permitDate = permitExpiry ? new Date(permitExpiry) : null;
+            const contractDate = contractExpiry ? new Date(contractExpiry) : null;
+            
+            let status = 'سارية';
+            let statusClass = 'text-green-600 dark:text-green-400';
+            
+            // Check if any date is expired
+            if ((permitDate && permitDate <= today) || (contractDate && contractDate <= today)) {
+                status = 'منتهية';
+                statusClass = 'text-red-600 dark:text-red-400 font-bold';
+            } 
+            // Check if any date is expiring soon
+            else if ((permitDate && permitDate <= oneMonthLater) || (contractDate && contractDate <= oneMonthLater)) {
+                status = 'قرب الانتهاء';
+                statusClass = 'text-yellow-600 dark:text-yellow-400 font-bold';
+            }
+            
+            return { status, statusClass };
+        }
+        
+        /**
+         * Exporta datos de una tabla a un archivo Excel
+         * @param {string} tableId - ID de la tabla a exportar
+         * @param {string} filename - Nombre del archivo a generar
+         */
+        function exportTableToExcel(tableId, filename) {
+            const table = document.getElementById(tableId);
+            if (!table) {
+                showToast("لم يتم العثور على جدول البيانات", "error");
+                return;
+            }
+            
+            const rows = table.querySelectorAll('tr');
+            if (rows.length <= 1) {
+                showToast("لا توجد بيانات للتصدير", "warning");
+                return;
+            }
+            
+            showSyncStatus(true);
+            
+            try {
+                const data = [];
+                
+                // Extract headers
+                const headerRow = rows[0];
+                const headers = [];
+                headerRow.querySelectorAll('th').forEach(th => {
+                    headers.push(th.textContent);
+                });
+                data.push(headers);
+                
+                // Extract data rows
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    const rowData = [];
+                    
+                    // Skip loading row or empty data message
+                    if (row.querySelector('td[colspan]')) {
+                        continue;
+                    }
+                    
+                    row.querySelectorAll('td').forEach(td => {
+                        // Skip action column buttons
+                        if (!td.querySelector('button')) {
+                            // Get text content without any HTML
+                            const cellText = td.textContent.trim();
+                            rowData.push(cellText);
+                        }
+                    });
+                    
+                    if (rowData.length > 0) {
+                        data.push(rowData);
+                    }
+                }
+                
+                if (data.length <= 1) {
+                    showToast("لا توجد بيانات للتصدير", "warning");
+                    showSyncStatus(false);
+                    return;
+                }
+                
+                // Create worksheet
+                const ws = XLSX.utils.aoa_to_sheet(data);
+                
+                // Create workbook
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+                
+                // Generate XLSX file
+                XLSX.writeFile(wb, `${filename}.xlsx`);
+                
+                showToast("تم تصدير البيانات بنجاح", "success");
+            } catch (error) {
+                console.error("Export error:", error);
+                showToast("حدث خطأ أثناء تصدير البيانات", "error");
+            } finally {
+                showSyncStatus(false);
+            }
+        }
+        
+        /**
+         * Importa datos desde un archivo Excel a la base de datos
+         * @param {File} file - Archivo Excel a importar
+         * @param {string} dataType - Tipo de datos a importar (students, supervisors, drivers, buses)
+         */
+        function importExcelFile(file, dataType) {
+            if (!file) {
+                showToast("الرجاء اختيار ملف صالح", "error");
+                return;
+            }
+            
+            showSyncStatus(true);
+            
+            const reader = new FileReader();
+            
+            reader.onload = async function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                    
+                    if (jsonData.length === 0) {
+                        showToast("لا توجد بيانات في الملف المحدد", "warning");
+                        showSyncStatus(false);
+                        return;
+                    }
+                    
+                    // Clear existing data
+                    let collectionRef;
+                    let updateCount = 0;
+                    
+                    if (dataType === 'students') {
+                        collectionRef = studentsRef;
+                    } else if (dataType === 'supervisors') {
+                        collectionRef = supervisorsRef;
+                    } else if (dataType === 'drivers') {
+                        collectionRef = driversRef;
+                    } else if (dataType === 'buses') {
+                        collectionRef = busesRef;
+                    }
+                    
+                    // Get existing IDs to only update, not delete
+                    const snapshot = await collectionRef.get();
+                    const existingIds = new Map();
+                    
+                    snapshot.forEach(doc => {
+                        existingIds.set(doc.id, doc.data());
+                    });
+                    
+                    // Process import data
+                    const batch = db.batch();
+                    let importCount = 0;
+                    
+                    for (const row of jsonData) {
+                        let docId;
+                        let docData = {};
+                        
+                        if (dataType === 'students') {
+                            docId = (row['الرقم'] || '').toString();
+                            if (!docId) continue;
+                            
+                            docData = {
+                                id: docId,
+                                name: row['اسم الطالب'] || '',
+                                grade: row['الصف'] || '',
+                                busNumber: (row['رقم الحافلة'] || '').toString(),
+                                area: row['المنطقة'] || ''
+                            };
+                        } else if (dataType === 'supervisors') {
+                            docId = (row['رقم التصريح'] || '').toString();
+                            if (!docId) continue;
+                            
+                            docData = {
+                                id: docId,
+                                name: row['اسم المشرفة'] || '',
+                                gender: row['الجنس'] || 'أنثى',
+                                permitExpiry: row['تاريخ انتهاء التصريح'] || '',
+                                contractExpiry: row['تاريخ انتهاء العقد'] || ''
+                            };
+                        } else if (dataType === 'drivers') {
+                            docId = (row['رقم التصريح'] || '').toString();
+                            if (!docId) continue;
+                            
+                            docData = {
+                                id: docId,
+                                name: row['اسم السائق'] || '',
+                                gender: row['الجنس'] || 'ذكر',
+                                permitExpiry: row['تاريخ انتهاء التصريح'] || '',
+                                contractExpiry: row['تاريخ انتهاء العقد'] || ''
+                            };
+                        } else if (dataType === 'buses') {
+                            docId = (row['رقم الحافلة'] || '').toString();
+                            if (!docId) continue;
+                            
+                            docData = {
+                                id: docId,
+                                dot: row['رقم DOT'] || '',
+                                permitExpiry: row['تاريخ انتهاء التصريح'] || ''
+                            };
+                        }
+                        
+                        if (docId && Object.keys(docData).length > 0) {
+                            // Add timestamp
+                            docData.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
+                            
+                            const docRef = collectionRef.doc(docId);
+                            batch.set(docRef, docData);
+                            importCount++;
+                            
+                            // Remove from existing IDs to track what was updated
+                            if (existingIds.has(docId)) {
+                                updateCount++;
+                                existingIds.delete(docId);
+                            }
+                        }
+                    }
+                    
+                    // Commit the batch
+                    await batch.commit();
+                    
+                    // Update UI to reflect changes
+                    if (dataType === 'students') {
+                        fetchStudentsData();
+                    } else if (dataType === 'supervisors') {
+                        fetchSupervisorsData();
+                    } else if (dataType === 'drivers') {
+                        fetchDriversData();
+                    } else if (dataType === 'buses') {
+                        fetchBusesData();
+                    }
+                    
+                    showToast(`تم استيراد ${importCount} من البيانات (${updateCount} تم تحديثها)`, "success");
+                    checkExpirations();
+                } catch (error) {
+                    console.error("Import error:", error);
+                    showToast("حدث خطأ أثناء استيراد البيانات", "error");
+                } finally {
+                    showSyncStatus(false);
+                }
+            };
+            
+            reader.onerror = function() {
+                showToast("حدث خطأ أثناء قراءة الملف", "error");
+                showSyncStatus(false);
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+        
+        /**
+         * Muestra u oculta el indicador de sincronización
+         * @param {boolean} show - Indica si se debe mostrar el indicador
+         */
+        function showSyncStatus(show) {
+            const transportSync = document.getElementById('sync-status');
+            const managerSync = document.getElementById('manager-sync-status');
+            
+            if (show) {
+                transportSync.classList.remove('hidden');
+                managerSync.classList.remove('hidden');
+            } else {
+                transportSync.classList.add('hidden');
+                managerSync.classList.add('hidden');
+            }
+        }
+        
+        // Firebase Data Functions
+        /**
+         * Obtiene los datos de estudiantes desde Firebase y actualiza la interfaz
+         */
+        async function fetchStudentsData() {
+            try {
+                showSyncStatus(true);
+                
+                // Clear tables
+                document.getElementById('students-table-body').innerHTML = `
+                    <tr id="students-loading-row">
+                        <td colspan="5" class="text-center py-8">
+                            <div class="animate-pulse flex justify-center items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                </svg>
+                                <span class="mr-3 text-lg">جاري تحميل البيانات...</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                
+                document.getElementById('manager-students-table-body').innerHTML = document.getElementById('students-table-body').innerHTML;
+                
+                // Get students data
+                const snapshot = await studentsRef.orderBy('id').get();
+                
+                if (snapshot.empty) {
+                    document.getElementById('students-table-body').innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center py-4">لا توجد بيانات للعرض. يمكنك استيراد البيانات من ملف Excel.</td>
+                        </tr>
+                    `;
+                    document.getElementById('manager-students-table-body').innerHTML = document.getElementById('students-table-body').innerHTML;
+                    
+                    document.getElementById('student-count').textContent = '0';
+                    document.getElementById('manager-student-count').textContent = '0';
+                    return;
+                }
+                
+                // Clear loading rows
+                document.getElementById('students-table-body').innerHTML = '';
+                document.getElementById('manager-students-table-body').innerHTML = '';
+                
+                let students = [];
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    students.push(data);
+                    
+                    // Create row for transport officer view
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${data.id}</td>
+                        <td>${data.name}</td>
+                        <td>${data.grade}</td>
+                        <td>${data.busNumber}</td>
+                        <td>${data.area}</td>
+                    `;
+                    document.getElementById('students-table-body').appendChild(row);
+                    
+                    // Create row for manager view
+                    const managerRow = row.cloneNode(true);
+                    document.getElementById('manager-students-table-body').appendChild(managerRow);
+                });
+                
+                // Update counts
+                document.getElementById('student-count').textContent = students.length;
+                document.getElementById('manager-student-count').textContent = students.length;
+            } catch (error) {
+                console.error("Error fetching students:", error);
+                showToast("حدث خطأ أثناء تحميل بيانات الطلاب", "error");
+                
+                // Show error message
+                document.getElementById('students-table-body').innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-red-500">حدث خطأ أثناء تحميل البيانات. الرجاء المحاولة مرة أخرى.</td>
+                    </tr>
+                `;
+                document.getElementById('manager-students-table-body').innerHTML = document.getElementById('students-table-body').innerHTML;
+            } finally {
+                showSyncStatus(false);
+            }
+        }
+        
+        /**
+         * Obtiene los datos de supervisores desde Firebase y actualiza la interfaz
+         * @param {string} searchTerm - Término para filtrar los resultados (opcional)
+         */
+        async function fetchSupervisorsData(searchTerm = '') {
+            try {
+                showSyncStatus(true);
+                
+                // Clear tables
+                document.getElementById('supervisors-table-body').innerHTML = `
+                    <tr id="supervisors-loading-row">
+                        <td colspan="7" class="text-center py-8">
+                            <div class="animate-pulse flex justify-center items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                </svg>
+                                <span class="mr-3 text-lg">جاري تحميل البيانات...</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                
+                document.getElementById('manager-supervisors-table-body').innerHTML = `
+                    <tr id="manager-supervisors-loading-row">
+                        <td colspan="6" class="text-center py-8">
+                            <div class="animate-pulse flex justify-center items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                </svg>
+                                <span class="mr-3 text-lg">جاري تحميل البيانات...</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                
+                // Get supervisors data
+                let query = supervisorsRef.orderBy('id');
+                const snapshot = await query.get();
+                
+                if (snapshot.empty) {
+                    document.getElementById('supervisors-table-body').innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center py-4">لا توجد بيانات للعرض. يمكنك إضافة مشرفة جديدة أو استيراد البيانات من ملف Excel.</td>
+                        </tr>
+                    `;
+                    
+                    document.getElementById('manager-supervisors-table-body').innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center py-4">لا توجد بيانات للعرض.</td>
+                        </tr>
+                    `;
+                    
+                    document.getElementById('manager-supervisor-count').textContent = '0';
+                    return;
+                }
+                
+                // Clear loading rows
+                document.getElementById('supervisors-table-body').innerHTML = '';
+                document.getElementById('manager-supervisors-table-body').innerHTML = '';
+                
+                let supervisors = [];
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    supervisors.push(data);
+                    
+                    // Apply search filter if term exists
+                    if (searchTerm) {
+                        const term = searchTerm.toLowerCase();
+                        const idMatch = data.id.toString().toLowerCase().includes(term);
+                        const nameMatch = data.name.toLowerCase().includes(term);
+                        
+                        if (!idMatch && !nameMatch) {
+                            return; // Skip this item
+                        }
+                    }
+                    
+                    // Check status
+                    const { status, statusClass } = checkItemStatus(data.permitExpiry, data.contractExpiry);
+                    
+                    // Create row for transport officer view
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${data.id}</td>
+                        <td>${data.name}</td>
+                        <td>${data.gender}</td>
+                        <td>${formatDate(data.permitExpiry)}</td>
+                        <td>${formatDate(data.contractExpiry)}</td>
+                        <td class="${statusClass}">${status}</td>
+                        <td>
+                            <div class="flex space-x-2 space-x-reverse">
+                                <button class="edit-supervisor px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600" data-id="${data.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                </button>
+                                <button class="delete-supervisor px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600" data-id="${data.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    document.getElementById('supervisors-table-body').appendChild(row);
+                    
+                    // Create row for manager view (without action buttons)
+                    const managerRow = document.createElement('tr');
+                    managerRow.innerHTML = `
+                        <td>${data.id}</td>
+                        <td>${data.name}</td>
+                        <td>${data.gender}</td>
+                        <td>${formatDate(data.permitExpiry)}</td>
+                        <td>${formatDate(data.contractExpiry)}</td>
+                        <td class="${statusClass}">${status}</td>
+                    `;
+                    document.getElementById('manager-supervisors-table-body').appendChild(managerRow);
+                });
+                
+                // Add event listeners to edit and delete buttons
+                document.querySelectorAll('.edit-supervisor').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        editSupervisor(id);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-supervisor').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        deleteSupervisor(id);
+                    });
+                });
+                
+                // Update count
+                document.getElementById('manager-supervisor-count').textContent = supervisors.length;
+            } catch (error) {
+                console.error("Error fetching supervisors:", error);
+                showToast("حدث خطأ أثناء تحميل بيانات المشرفات", "error");
+                
+                // Show error message
+                document.getElementById('supervisors-table-body').innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-red-500">حدث خطأ أثناء تحميل البيانات. الرجاء المحاولة مرة أخرى.</td>
+                    </tr>
+                `;
+                
+                document.getElementById('manager-supervisors-table-body').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-red-500">حدث خطأ أثناء تحميل البيانات. الرجاء المحاولة مرة أخرى.</td>
+                    </tr>
+                `;
+            } finally {
+                showSyncStatus(false);
+            }
+        }
+        
+        /**
+         * Obtiene los datos de conductores desde Firebase y actualiza la interfaz
+         * @param {string} searchTerm - Término para filtrar los resultados (opcional)
+         */
+        async function fetchDriversData(searchTerm = '') {
+            try {
+                showSyncStatus(true);
+                
+                // Clear tables
+                document.getElementById('drivers-table-body').innerHTML = `
+                    <tr id="drivers-loading-row">
+                        <td colspan="7" class="text-center py-8">
+                            <div class="animate-pulse flex justify-center items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                </svg>
+                                <span class="mr-3 text-lg">جاري تحميل البيانات...</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                
+                document.getElementById('manager-drivers-table-body').innerHTML = `
+                    <tr id="manager-drivers-loading-row">
+                        <td colspan="6" class="text-center py-8">
+                            <div class="animate-pulse flex justify-center items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                </svg>
+                                <span class="mr-3 text-lg">جاري تحميل البيانات...</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                
+                // Get drivers data
+                let query = driversRef.orderBy('id');
+                const snapshot = await query.get();
+                
+                if (snapshot.empty) {
+                    document.getElementById('drivers-table-body').innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center py-4">لا توجد بيانات للعرض. يمكنك إضافة سائق جديد أو استيراد البيانات من ملف Excel.</td>
+                        </tr>
+                    `;
+                    
+                    document.getElementById('manager-drivers-table-body').innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center py-4">لا توجد بيانات للعرض.</td>
+                        </tr>
+                    `;
+                    
+                    document.getElementById('manager-driver-count').textContent = '0';
+                    return;
+                }
+                
+                // Clear loading rows
+                document.getElementById('drivers-table-body').innerHTML = '';
+                document.getElementById('manager-drivers-table-body').innerHTML = '';
+                
+                let drivers = [];
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    drivers.push(data);
+                    
+                    // Apply search filter if term exists
+                    if (searchTerm) {
+                        const term = searchTerm.toLowerCase();
+                        const idMatch = data.id.toString().toLowerCase().includes(term);
+                        const nameMatch = data.name.toLowerCase().includes(term);
+                        
+                        if (!idMatch && !nameMatch) {
+                            return; // Skip this item
+                        }
+                    }
+                    
+                    // Check status
+                    const { status, statusClass } = checkItemStatus(data.permitExpiry, data.contractExpiry);
+                    
+                    // Create row for transport officer view
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${data.id}</td>
+                        <td>${data.name}</td>
+                        <td>${data.gender}</td>
+                        <td>${formatDate(data.permitExpiry)}</td>
+                        <td>${formatDate(data.contractExpiry)}</td>
+                        <td class="${statusClass}">${status}</td>
+                        <td>
+                            <div class="flex space-x-2 space-x-reverse">
+                                <button class="edit-driver px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600" data-id="${data.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                </button>
+                                <button class="delete-driver px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600" data-id="${data.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    document.getElementById('drivers-table-body').appendChild(row);
+                    
+                    // Create row for manager view (without action buttons)
+                    const managerRow = document.createElement('tr');
+                    managerRow.innerHTML = `
+                        <td>${data.id}</td>
+                        <td>${data.name}</td>
+                        <td>${data.gender}</td>
+                        <td>${formatDate(data.permitExpiry)}</td>
+                        <td>${formatDate(data.contractExpiry)}</td>
+                        <td class="${statusClass}">${status}</td>
+                    `;
+                    document.getElementById('manager-drivers-table-body').appendChild(managerRow);
+                });
+                
+                // Add event listeners to edit and delete buttons
+                document.querySelectorAll('.edit-driver').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        editDriver(id);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-driver').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        deleteDriver(id);
+                    });
+                });
+                
+                // Update count
+                document.getElementById('manager-driver-count').textContent = drivers.length;
+            } catch (error) {
+                console.error("Error fetching drivers:", error);
+                showToast("حدث خطأ أثناء تحميل بيانات السائقين", "error");
+                
+                // Show error message
+                document.getElementById('drivers-table-body').innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-red-500">حدث خطأ أثناء تحميل البيانات. الرجاء المحاولة مرة أخرى.</td>
+                    </tr>
+                `;
+                
+                document.getElementById('manager-drivers-table-body').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-red-500">حدث خطأ أثناء تحميل البيانات. الرجاء المحاولة مرة أخرى.</td>
+                    </tr>
+                `;
+            } finally {
+                showSyncStatus(false);
+            }
+        }
+        
+        /**
+         * Obtiene los datos de autobuses desde Firebase y actualiza la interfaz
+         * @param {string} searchTerm - Término para filtrar los resultados (opcional)
+         */
+        async function fetchBusesData(searchTerm = '') {
+            try {
+                showSyncStatus(true);
+                
+                // Clear tables
+                document.getElementById('buses-table-body').innerHTML = `
+                    <tr id="buses-loading-row">
+                        <td colspan="5" class="text-center py-8">
+                            <div class="animate-pulse flex justify-center items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                </svg>
+                                <span class="mr-3 text-lg">جاري تحميل البيانات...</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                
+                document.getElementById('manager-buses-table-body').innerHTML = `
+                    <tr id="manager-buses-loading-row">
+                        <td colspan="4" class="text-center py-8">
+                            <div class="animate-pulse flex justify-center items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                </svg>
+                                <span class="mr-3 text-lg">جاري تحميل البيانات...</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                
+                // Get buses data
+                let query = busesRef.orderBy('id');
+                const snapshot = await query.get();
+                
+                if (snapshot.empty) {
+                    document.getElementById('buses-table-body').innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center py-4">لا توجد بيانات للعرض. يمكنك إضافة حافلة جديدة أو استيراد البيانات من ملف Excel.</td>
+                        </tr>
+                    `;
+                    
+                    document.getElementById('manager-buses-table-body').innerHTML = `
+                        <tr>
+                            <td colspan="4" class="text-center py-4">لا توجد بيانات للعرض.</td>
+                        </tr>
+                    `;
+                    
+                    document.getElementById('manager-bus-count').textContent = '0';
+                    return;
+                }
+                
+                // Clear loading rows
+                document.getElementById('buses-table-body').innerHTML = '';
+                document.getElementById('manager-buses-table-body').innerHTML = '';
+                
+                let buses = [];
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    buses.push(data);
+                    
+                    // Apply search filter if term exists
+                    if (searchTerm) {
+                        const term = searchTerm.toLowerCase();
+                        const idMatch = data.id.toString().toLowerCase().includes(term);
+                        const dotMatch = data.dot.toLowerCase().includes(term);
+                        
+                        if (!idMatch && !dotMatch) {
+                            return; // Skip this item
+                        }
+                    }
+                    
+                    // Check status
+                    const { status, statusClass } = checkItemStatus(data.permitExpiry);
+                    
+                    // Create row for transport officer view
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${data.id}</td>
+                        <td>${data.dot}</td>
+                        <td>${formatDate(data.permitExpiry)}</td>
+                        <td class="${statusClass}">${status}</td>
+                        <td>
+                            <div class="flex space-x-2 space-x-reverse">
+                                <button class="edit-bus px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600" data-id="${data.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                </button>
+                                <button class="delete-bus px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600" data-id="${data.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    document.getElementById('buses-table-body').appendChild(row);
+                    
+                    // Create row for manager view (without action buttons)
+                    const managerRow = document.createElement('tr');
+                    managerRow.innerHTML = `
+                        <td>${data.id}</td>
+                        <td>${data.dot}</td>
+                        <td>${formatDate(data.permitExpiry)}</td>
+                        <td class="${statusClass}">${status}</td>
+                    `;
+                    document.getElementById('manager-buses-table-body').appendChild(managerRow);
+                });
+                
+                // Add event listeners to edit and delete buttons
+                document.querySelectorAll('.edit-bus').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        editBus(id);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-bus').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        deleteBus(id);
+                    });
+                });
+                
+                // Update count
+                document.getElementById('manager-bus-count').textContent = buses.length;
+            } catch (error) {
+                console.error("Error fetching buses:", error);
+                showToast("حدث خطأ أثناء تحميل بيانات الحافلات", "error");
+                
+                // Show error message
+                document.getElementById('buses-table-body').innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-red-500">حدث خطأ أثناء تحميل البيانات. الرجاء المحاولة مرة أخرى.</td>
+                    </tr>
+                `;
+                
+                document.getElementById('manager-buses-table-body').innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-red-500">حدث خطأ أثناء تحميل البيانات. الرجاء المحاولة مرة أخرى.</td>
+                    </tr>
+                `;
+            } finally {
+                showSyncStatus(false);
+            }
+        }
+        
+        // Add/Edit/Delete Functions
+        /**
+         * Añade un nuevo supervisor a la base de datos
+         */
+        async function addSupervisor() {
+            const id = document.getElementById('supervisor-id').value;
+            const name = document.getElementById('supervisor-name').value;
+            const gender = document.getElementById('supervisor-gender').value;
+            const permitExpiry = document.getElementById('supervisor-permit-expiry').value;
+            const contractExpiry = document.getElementById('supervisor-contract-expiry').value;
+            
+            if (!id || !name || !permitExpiry || !contractExpiry) {
+                showToast("يرجى ملء جميع الحقول المطلوبة", "error");
+                return;
+            }
+            
+            showSyncStatus(true);
+            
+            try {
+                // Check if ID already exists
+                const docSnapshot = await supervisorsRef.doc(id).get();
+                
+                if (docSnapshot.exists) {
+                    showToast("رقم التصريح موجود بالفعل", "error");
+                    showSyncStatus(false);
+                    return;
+                }
+                
+                // Add new supervisor
+                await supervisorsRef.doc(id).set({
+                    id,
+                    name,
+                    gender,
+                    permitExpiry,
+                    contractExpiry,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Clear form
+                document.getElementById('supervisor-id').value = '';
+                document.getElementById('supervisor-name').value = '';
+                document.getElementById('supervisor-permit-expiry').value = '';
+                document.getElementById('supervisor-contract-expiry').value = '';
+                
+                // Refresh data
+                await fetchSupervisorsData();
+                await checkExpirations();
+                
+                showToast("تمت إضافة المشرفة بنجاح", "success");
+            } catch (error) {
+                console.error("Error adding supervisor:", error);
+                showToast("حدث خطأ أثناء إضافة المشرفة", "error");
+            } finally {
+                showSyncStatus(false);
+            }
+        }
+        
+        /**
+         * Carga los datos de un supervisor para edición
+         * @param {string} id - ID del supervisor a editar
+         */
+        async function editSupervisor(id) {
+            showSyncStatus(true);
+            
+            try {
+                const docSnapshot = await supervisorsRef.doc(id).get();
+                
+                if (!docSnapshot.exists) {
+                    showToast("لم يتم العثور على بيانات المشرفة", "error");
+                    return;
+                }
+                
+                const supervisor = docSnapshot.data();
+                
+                document.getElementById('supervisor-id').value = supervisor.id;
+                document.getElementById('supervisor-name').value = supervisor.name;
+                document.getElementById('supervisor-gender').value = supervisor.gender || 'أنثى';
+                document.getElementById('supervisor-permit-expiry').value = supervisor.permitExpiry;
+                document.getElementById('supervisor-contract-expiry').value = supervisor.contractExpiry;
+                
+                // Show update and cancel buttons, hide add button
+                document.getElementById('add-supervisor').classList.add('hidden');
+                document.getElementById('update-supervisor').classList.remove('hidden');
+                document.getElementById('cancel-supervisor-edit').classList.remove('hidden');
+                
+                // Disable ID field during edit
+                document.getElementById('supervisor-id').setAttribute('readonly', true);
+                document.getElementById('supervisor-id').classList.add('bg-gray-100', 'dark:bg-gray-600');
+                
+                // Scroll to form
+                document.querySelector('#supervisors-section .mb-6').scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                console.error("Error fetching supervisor for edit:", error);
+                showToast("حدث خطأ أثناء تحميل بيانات المشرفة", "error");
+            } finally {
+                showSyncStatus(false);
+            }
+        }
+        
+        /**
+         * Actualiza los datos de un supervisor en la base de datos
+         */
+        async function updateSupervisor() {
+            const id = document.getElementById('supervisor-id').value;
+            const name = document.getElementById('supervisor-name').value;
+            const gender = document.getElementById('supervisor-gender').value;
+            const permitExpiry = document.getElementById('supervisor-permit-expiry').value;
+            const contractExpiry = document.getElementById('supervisor-contract-expiry').value;
+            
+            if (!id || !name || !permitExpiry || !contractExpiry) {
+                showToast("يرجى ملء جميع الحقول المطلوبة", "error");
+                return;
+            }
+            
+            showSyncStatus(true);
+            
+            try {
+                // Update supervisor
+                await supervisorsRef.doc(id).update({
+                    name,
+                    gender,
+                    permitExpiry,
+                    contractExpiry,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Reset form
+                document.getElementById('supervisor-id').value = '';
+                document.getElementById('supervisor-name').value = '';
+                document.getElementById('supervisor-permit-expiry').value = '';
+                document.getElementById('supervisor-contract-expiry').value = '';
+                
+                // Show add button, hide update and cancel buttons
+                document.getElementById('add-supervisor').classList.remove('hidden');
+                document.getElementById('update-supervisor').classList.add('hidden');
+                document.getElementById('cancel-supervisor-edit').classList.add('hidden');
+                
+                // Enable ID field
+                document.getElementById('supervisor-id').removeAttribute('readonly');
+                document.getElementById('supervisor-id').classList.remove('bg-gray-100', 'dark:bg-gray-600');
+                
+                // Refresh data
+                await fetchSupervisorsData();
+                await checkExpirations();
+                
+                showToast("تم تحديث بيانات المشرفة بنجاح", "success");
+            } catch (error) {
+                console.error("Error updating supervisor:", error);
+                showToast("حدث خطأ أثناء تحديث بيانات المشرفة", "error");
+            } finally {
+                showSyncStatus(false);
+            }
+        }
+        
+        /**
+         * Elimina un supervisor de la base de datos
+         * @param {string} id - ID del supervisor a eliminar
+         */
+        async function deleteSupervisor(id) {
+            if (confirm('هل أنت متأكد من حذف هذه المشرفة؟')) {
+                showSyncStatus(true);
+                
+                try {
+                    await supervisorsRef.doc(id).delete();
+                    
+                    // Refresh data
+                    await fetchSupervisorsData();
+                    showToast("تم حذف المشرفة بنجاح", "success");
+                } catch (error) {
+                    console.error("Error deleting supervisor:", error);
+                    showToast("حدث خطأ أثناء حذف المشرفة", "error");
+                } finally {
+                    showSyncStatus(false);
+                }
+            }
+        }
+        
+        /**
+         * Añade un nuevo conductor a la base de datos
+         */
+        async function addDriver() {
+            const id = document.getElementById('driver-id').value;
+            const name = document.getElementById('driver-name').value;
+            const gender = document.getElementById('driver-gender').value;
+            const permitExpiry = document.getElementById('driver-permit-expiry').value;
+            const contractExpiry = document.getElementById('driver-contract-expiry').value;
+            
+            if (!id || !name || !permitExpiry || !contractExpiry) {
+                showToast("يرجى ملء جميع الحقول المطلوبة", "error");
+                return;
+            }
+            
+            showSyncStatus(true);
+            
+            try {
+                // Check if ID already exists
+                const docSnapshot = await driversRef.doc(id).get();
+                
+                if (docSnapshot.exists) {
+                    showToast("رقم التصريح موجود بالفعل", "error");
+                    showSyncStatus(false);
+                    return;
+                }
+                
+                // Add new driver
+                await driversRef.doc(id).set({
+                    id,
+                    name,
+                    gender,
+                    permitExpiry,
+                    contractExpiry,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Clear form
+                document.getElementById('driver-id').value = '';
+                document.getElementById('driver-name').value = '';
+                document.getElementById('driver-permit-expiry').value = '';
+                document.getElementById('driver-contract-expiry').value = '';
+                
+                // Refresh data
+                await fetchDriversData();
+                await checkExpirations();
+                
+                showToast("تمت إضافة السائق بنجاح", "success");
+            } catch (error) {
+                console.error("Error adding driver:", error);
+                showToast("حدث خطأ أثناء إضافة السائق", "error");
+            } finally {
+                showSyncStatus(false);
+            }
+        }
+        
+        /**
+         * Carga los datos de un conductor para edición
+         * @param {string} id - ID del conductor a editar
+         */
+        async function editDriver(id) {
+            showSyncStatus(true);
+            
+            try {
+                const docSnapshot = await driversRef.doc(id).get();
+                
+                if (!docSnapshot.exists) {
+                    showToast("لم يتم العثور على بيانات السائق", "error");
+                    return;
+                }
+                
+                const driver = docSnapshot.data();
+                
+                document.getElementById('driver-id').value = driver.id;
+                document.getElementById('driver-name').value = driver.name;
+                document.getElementById('driver-gender').value = driver.gender || 'ذكر';
+                document.getElementById('driver-permit-expiry').value = driver.permitExpiry;
+                document.getElementById('driver-contract-expiry').value = driver.contractExpiry;
+                
+                // Show update and cancel buttons, hide add button
+                document.getElementById('add-driver').classList.add('hidden');
+                document.getElementById('update-driver').classList.remove('hidden');
+                document.getElementById('cancel-driver-edit').classList.remove('hidden');
+                
+                // Disable ID field during edit
+                document.getElementById('driver-id').setAttribute('readonly', true);
+                document.getElementById('driver-id').classList.add('bg-gray-100', 'dark:bg-gray-600');
+                
+                // Scroll to form
+                document.querySelector('#drivers-section .mb-6').scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                console.error("Error fetching driver for edit:", error);
+                showToast("حدث خطأ أثناء تحميل بيانات السائق", "error");
+            } finally {
+                showSyncStatus(false);
+            }
+        }
+        
+        /**
+         * Actualiza los datos de un conductor en la base de datos
+         */
+        async function updateDriver() {
+            const id = document.getElementById('driver-id').value;
+            const name = document.getElementById('driver-name').value;
+            const gender = document.getElementById('driver-gender').value;
+            const permitExpiry = document.getElementById('driver-permit-expiry').value;
+            const contractExpiry = document.getElementById('driver-contract-expiry').value;
+            
+            if (!id || !name || !permitExpiry || !contractExpiry) {
+                showToast("يرجى ملء جميع الحقول المطلوبة", "error");
+                return;
+            }
+            
+            showSyncStatus(true);
+            
+            try {
+                // Update driver
+                await driversRef.doc(id).update({
+                    name,
+                    gender,
+                    permitExpiry,
+                    contractExpiry,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Reset form
+                document.getElementById('driver-id').value = '';
+                document.getElementById('driver-name').value = '';
+                document.getElementById('driver-permit-expiry').value = '';
+                document.getElementById('driver-contract-expiry').value = '';
+                
+                // Show add button, hide update and cancel buttons
+                document.getElementById('add-driver').classList.remove('hidden');
+                document.getElementById('update-driver').classList.add('hidden');
+                document.getElementById('cancel-driver-edit').classList.add('hidden');
+                
+                // Enable ID field
+                document.getElementById('driver-id').removeAttribute('readonly');
+                document.getElementById('driver-id').classList.remove('bg-gray-100', 'dark:bg-gray-600');
+                
+                // Refresh data
+                await fetchDriversData();
+                await checkExpirations();
+                
+                showToast("تم تحديث بيانات السائق بنجاح", "success");
+            } catch (error) {
+                console.error("Error updating driver:", error);
+                showToast("حدث خطأ أثناء تحديث بيانات السائق", "error");
+            } finally {
+                showSyncStatus(false);
+            }
+        }
+        
+        /**
+         * Elimina un conductor de la base de datos
+         * @param {string} id - ID del conductor a eliminar
+         */
+        async function deleteDriver(id) {
+            if (confirm('هل أنت متأكد من حذف هذا السائق؟')) {
+                showSyncStatus(true);
+                
+                try {
+                    await driversRef.doc(id).delete();
+                    
+                    // Refresh data
+                    await fetchDriversData();
+                    showToast("تم حذف السائق بنجاح", "success");
+                } catch (error) {
+                    console.error("Error deleting driver:", error);
+                    showToast("حدث خطأ أثناء حذف السائق", "error");
+                } finally {
+                    showSyncStatus(false);
+                }
+            }
+        }
+        
+        /**
+         * Añade un nuevo autobús a la base de datos
+         */
+        async function addBus() {
+            const id = document.getElementById('bus-id').value;
+            const dot = document.getElementById('bus-dot').value;
+            const permitExpiry = document.getElementById('bus-permit-expiry').value;
+            
+            if (!id || !dot || !permitExpiry) {
+                showToast("يرجى ملء جميع الحقول المطلوبة", "error");
+                return;
+            }
+            
+            showSyncStatus(true);
+            
+            try {
+                // Check if ID already exists
+                const docSnapshot = await busesRef.doc(id).get();
+                
+                if (docSnapshot.exists) {
+                    showToast("رقم الحافلة موجود بالفعل", "error");
+                    showSyncStatus(false);
+                    return;
+                }
+                
+                // Add new bus
+                await busesRef.doc(id).set({
+                    id,
+                    dot,
+                    permitExpiry,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Clear form
+                document.getElementById('bus-id').value = '';
+                document.getElementById('bus-dot').value = '';
+                document.getElementById('bus-permit-expiry').value = '';
+                
+                // Refresh data
+                await fetchBusesData();
+                await checkExpirations();
+                
+                showToast("تمت إضافة الحافلة بنجاح", "success");
+            } catch (error) {
+                console.error("Error adding bus:", error);
+                showToast("حدث خطأ أثناء إضافة الحافلة", "error");
+            } finally {
+                showSyncStatus(false);
+            }
+        }
+        
+        /**
+         * Carga los datos de un autobús para edición
+         * @param {string} id - ID del autobús a editar
+         */
+        async function editBus(id) {
+            showSyncStatus(true);
+            
+            try {
+                const docSnapshot = await busesRef.doc(id).get();
+                
+                if (!docSnapshot.exists) {
+                    showToast("لم يتم العثور على بيانات الحافلة", "error");
+                    return;
+                }
+                
+                const bus = docSnapshot.data();
+                
+                document.getElementById('bus-id').value = bus.id;
+                document.getElementById('bus-dot').value = bus.dot;
+                document.getElementById('bus-permit-expiry').value = bus.permitExpiry;
+                
+                // Show update and cancel buttons, hide add button
+                document.getElementById('add-bus').classList.add('hidden');
+                document.getElementById('update-bus').classList.remove('hidden');
+                document.getElementById('cancel-bus-edit').classList.remove('hidden');
+                
+                // Disable ID field during edit
+                document.getElementById('bus-id').setAttribute('readonly', true);
+                document.getElementById('bus-id').classList.add('bg-gray-100', 'dark:bg-gray-600');
+                
+                // Scroll to form
+                document.querySelector('#buses-section .mb-6').scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                console.error("Error fetching bus for edit:", error);
+                showToast("حدث خطأ أثناء تحميل بيانات الحافلة", "error");
+            } finally {
+                showSyncStatus(false);
+            }
+        }
+        
+        /**
+         * Actualiza los datos de un autobús en la base de datos
+         */
+        async function updateBus() {
+            const id = document.getElementById('bus-id').value;
+            const dot = document.getElementById('bus-dot').value;
+            const permitExpiry = document.getElementById('bus-permit-expiry').value;
+            
+            if (!id || !dot || !permitExpiry) {
+                showToast("يرجى ملء جميع الحقول المطلوبة", "error");
+                return;
+            }
+            
+            showSyncStatus(true);
+            
+            try {
+                // Update bus
+                await busesRef.doc(id).update({
+                    dot,
+                    permitExpiry,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Reset form
+                document.getElementById('bus-id').value = '';
+                document.getElementById('bus-dot').value = '';
+                document.getElementById('bus-permit-expiry').value = '';
+                
+                // Show add button, hide update and cancel buttons
+                document.getElementById('add-bus').classList.remove('hidden');
+                document.getElementById('update-bus').classList.add('hidden');
+                document.getElementById('cancel-bus-edit').classList.add('hidden');
+                
+                // Enable ID field
+                document.getElementById('bus-id').removeAttribute('readonly');
+                document.getElementById('bus-id').classList.remove('bg-gray-100', 'dark:bg-gray-600');
+                
+                // Refresh data
+                await fetchBusesData();
+                await checkExpirations();
+                
+                showToast("تم تحديث بيانات الحافلة بنجاح", "success");
+            } catch (error) {
+                console.error("Error updating bus:", error);
+                showToast("حدث خطأ أثناء تحديث بيانات الحافلة", "error");
+            } finally {
+                showSyncStatus(false);
+            }
+        }
+        
+        /**
+         * Elimina un autobús de la base de datos
+         * @param {string} id - ID del autobús a eliminar
+         */
+        async function deleteBus(id) {
+            if (confirm('هل أنت متأكد من حذف هذه الحافلة؟')) {
+                showSyncStatus(true);
+                
+                try {
+                    await busesRef.doc(id).delete();
+                    
+                    // Refresh data
+                    await fetchBusesData();
+                    showToast("تم حذف الحافلة بنجاح", "success");
+                } catch (error) {
+                    console.error("Error deleting bus:", error);
+                    showToast("حدث خطأ أثناء حذف الحافلة", "error");
+                } finally {
+                    showSyncStatus(false);
+                }
+            }
+        }
+        
+        // Notifications and Expirations
+        /**
+         * Verifica elementos próximos a expirar o expirados y genera notificaciones
+         */
+        async function checkExpirations() {
+            try {
+                const today = new Date();
+                const oneMonthLater = new Date();
+                oneMonthLater.setMonth(today.getMonth() + 1);
+                
+                let newNotifications = [];
+                
+                // Supervisors expiration check
+                const supervisorsSnapshot = await supervisorsRef.get();
+                supervisorsSnapshot.forEach(doc => {
+                    const supervisor = doc.data();
+                    const permitExpiry = new Date(supervisor.permitExpiry);
+                    const contractExpiry = new Date(supervisor.contractExpiry);
+                    
+                    if (permitExpiry > today && permitExpiry <= oneMonthLater) {
+                        newNotifications.push({
+                            id: `supervisor-permit-${supervisor.id}`,
+                            type: 'warning',
+                            message: `تحذير: تصريح المشرفة ${supervisor.name} ينتهي في ${formatDate(supervisor.permitExpiry)}`,
+                            date: new Date().toISOString()
+                        });
+                    }
+                    
+                    if (contractExpiry > today && contractExpiry <= oneMonthLater) {
+                        newNotifications.push({
+                            id: `supervisor-contract-${supervisor.id}`,
+                            type: 'warning',
+                            message: `تحذير: عقد المشرفة ${supervisor.name} ينتهي في ${formatDate(supervisor.contractExpiry)}`,
+                            date: new Date().toISOString()
+                        });
+                    }
+                    
+                    if (permitExpiry <= today) {
+                        newNotifications.push({
+                            id: `supervisor-permit-expired-${supervisor.id}`,
+                            type: 'error',
+                            message: `انتباه: تصريح المشرفة ${supervisor.name} منتهي منذ ${formatDate(supervisor.permitExpiry)}`,
+                            date: new Date().toISOString()
+                        });
+                    }
+                    
+                    if (contractExpiry <= today) {
+                        newNotifications.push({
+                            id: `supervisor-contract-expired-${supervisor.id}`,
+                            type: 'error',
+                            message: `انتباه: عقد المشرفة ${supervisor.name} منتهي منذ ${formatDate(supervisor.contractExpiry)}`,
+                            date: new Date().toISOString()
+                        });
+                    }
+                });
+                
+                // Drivers expiration check
+                const driversSnapshot = await driversRef.get();
+                driversSnapshot.forEach(doc => {
+                    const driver = doc.data();
+                    const permitExpiry = new Date(driver.permitExpiry);
+                    const contractExpiry = new Date(driver.contractExpiry);
+                    
+                    if (permitExpiry > today && permitExpiry <= oneMonthLater) {
+                        newNotifications.push({
+                            id: `driver-permit-${driver.id}`,
+                            type: 'warning',
+                            message: `تحذير: تصريح السائق ${driver.name} ينتهي في ${formatDate(driver.permitExpiry)}`,
+                            date: new Date().toISOString()
+                        });
+                    }
+                    
+                    if (contractExpiry > today && contractExpiry <= oneMonthLater) {
+                        newNotifications.push({
+                            id: `driver-contract-${driver.id}`,
+                            type: 'warning',
+                            message: `تحذير: عقد السائق ${driver.name} ينتهي في ${formatDate(driver.contractExpiry)}`,
+                            date: new Date().toISOString()
+                        });
+                    }
+                    
+                    if (permitExpiry <= today) {
+                        newNotifications.push({
+                            id: `driver-permit-expired-${driver.id}`,
+                            type: 'error',
+                            message: `انتباه: تصريح السائق ${driver.name} منتهي منذ ${formatDate(driver.permitExpiry)}`,
+                            date: new Date().toISOString()
+                        });
+                    }
+                    
+                    if (contractExpiry <= today) {
+                        newNotifications.push({
+                            id: `driver-contract-expired-${driver.id}`,
+                            type: 'error',
+                            message: `انتباه: عقد السائق ${driver.name} منتهي منذ ${formatDate(driver.contractExpiry)}`,
+                            date: new Date().toISOString()
+                        });
+                    }
+                });
+                
+                // Buses expiration check
+                const busesSnapshot = await busesRef.get();
+                busesSnapshot.forEach(doc => {
+                    const bus = doc.data();
+                    const permitExpiry = new Date(bus.permitExpiry);
+                    
+                    if (permitExpiry > today && permitExpiry <= oneMonthLater) {
+                        newNotifications.push({
+                            id: `bus-permit-${bus.id}`,
+                            type: 'warning',
+                            message: `تحذير: تصريح الحافلة ${bus.id} ينتهي في ${formatDate(bus.permitExpiry)}`,
+                            date: new Date().toISOString()
+                        });
+                    }
+                    
+                    if (permitExpiry <= today) {
+                        newNotifications.push({
+                            id: `bus-permit-expired-${bus.id}`,
+                            type: 'error',
+                            message: `انتباه: تصريح الحافلة ${bus.id} منتهي منذ ${formatDate(bus.permitExpiry)}`,
+                            date: new Date().toISOString()
+                        });
+                    }
+                });
+                
+                // Store the new notifications
+                if (newNotifications.length > 0) {
+                    // Use a batch to add/update notifications
+                    const batch = db.batch();
+                    
+                    newNotifications.forEach(notification => {
+                        const notificationRef = notificationsRef.doc(notification.id);
+                        batch.set(notificationRef, notification);
+                    });
+                    
+                    await batch.commit();
+                    
+                    // Update notifications count in the UI
+                    updateNotificationsUI();
+                    
+                    // Show the first notification as toast if there are new ones
+                    showToast(newNotifications[0].message, newNotifications[0].type);
+                }
+            } catch (error) {
+                console.error("Error checking expirations:", error);
+            }
+        }
+        
+        /**
+         * Actualiza la interfaz de notificaciones con los últimos datos
+         */
+        async function updateNotificationsUI() {
+            try {
+                const snapshot = await notificationsRef.orderBy('date', 'desc').get();
+                let notificationsList = [];
+                
+                snapshot.forEach(doc => {
+                    notificationsList.push(doc.data());
+                });
+                
+                notifications = notificationsList;
+                
+                if (notifications.length > 0) {
+                    document.getElementById('notification-badge').classList.remove('hidden');
+                    document.getElementById('notification-count').textContent = notifications.length;
+                } else {
+                    document.getElementById('notification-badge').classList.add('hidden');
+                }
+                
+                // Update the notifications modal content
+                const notificationsListElement = document.getElementById('notifications-list');
+                notificationsListElement.innerHTML = '';
+                
+                if (notifications.length === 0) {
+                    notificationsListElement.innerHTML = '<p class="text-center text-gray-500 dark:text-gray-400 py-4">لا توجد إشعارات</p>';
+                } else {
+                    notifications.forEach(notification => {
+                        const notificationElement = document.createElement('div');
+                        notificationElement.className = `p-3 rounded-lg ${notification.type === 'warning' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-r-4 border-yellow-500' : 'bg-red-50 dark:bg-red-900/20 border-r-4 border-red-500'}`;
+                        
+                        notificationElement.innerHTML = `
+                            <div class="flex items-start">
+                                <div class="mr-2 mt-0.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ${notification.type === 'warning' ? 'text-yellow-500' : 'text-red-500'}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="${notification.type === 'warning' ? 'text-yellow-700 dark:text-yellow-300' : 'text-red-700 dark:text-red-300'}">${notification.message}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${new Date(notification.date).toLocaleString('ar')}</p>
+                                </div>
+                            </div>
+                        `;
+                        
+                        notificationsListElement.appendChild(notificationElement);
+                    });
+                }
+            } catch (error) {
+                console.error("Error updating notifications UI:", error);
+            }
+        }
+        
+        // Navigation Functions
+        /**
+         * Oculta todas las secciones de contenido
+         */
+        function hideAllSections() {
+            document.querySelectorAll('#transport-dashboard > div > div').forEach(section => {
+                if (!section.classList.contains('grid')) {
+                    section.classList.add('hidden');
+                }
+            });
+            
+            document.querySelectorAll('#manager-dashboard > div > div').forEach(section => {
+                if (!section.classList.contains('grid')) {
+                    section.classList.add('hidden');
+                }
+            });
+        }
+        
+        /**
+         * Muestra una sección específica y oculta las demás
+         * @param {string} sectionId - ID de la sección a mostrar
+         */
+        function showSection(sectionId) {
+            hideAllSections();
+            document.getElementById(sectionId).classList.remove('hidden');
+        }
+
+        // Initialize Application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show a loading spinner for authentication state
+            setTimeout(() => {
+                // For demo, we'll show login directly
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('login-page').classList.remove('hidden');
+            }, 1500);
+            
+            // Authentication handling
+            document.getElementById('login-btn').addEventListener('click', async function() {
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                
+                if (!username || !password) {
+                    showToast("يرجى إدخال اسم المستخدم وكلمة المرور", "error");
+                    return;
+                }
+                
+                document.getElementById('loading-screen').classList.remove('hidden');
+                document.getElementById('login-page').classList.add('hidden');
+                
+                try {
+                    let authenticated = false;
+                    let userType = '';
+                    
+                    // For demo, we'll use simple authentication
+                    if (username === 'Hussain' && password === '606486') {
+                        authenticated = true;
+                        userType = 'transport';
+                    } else if (username === 'Admin' && password === '12345') {
+                        authenticated = true;
+                        userType = 'manager';
+                    }
+                    
+                    if (authenticated) {
+                        // Fetch initial data
+                        await Promise.all([
+                            fetchStudentsData(),
+                            fetchSupervisorsData(),
+                            fetchDriversData(),
+                            fetchBusesData(),
+                            updateNotificationsUI()
+                        ]);
+                        
+                        document.getElementById('loading-screen').classList.add('hidden');
+                        
+                        if (userType === 'transport') {
+                            document.getElementById('transport-dashboard').classList.remove('hidden');
+                            // Show the first section by default
+                            showSection('students-section');
+                        } else {
+                            document.getElementById('manager-dashboard').classList.remove('hidden');
+                            // Show the first section by default
+                            showSection('manager-students-section');
+                        }
+                        
+                        // Check for expirations
+                        await checkExpirations();
+                    } else {
+                        document.getElementById('loading-screen').classList.add('hidden');
+                        document.getElementById('login-page').classList.remove('hidden');
+                        
+                        const errorEl = document.getElementById('login-error');
+                        errorEl.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة';
+                        errorEl.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    console.error("Login error:", error);
+                    document.getElementById('loading-screen').classList.add('hidden');
+                    document.getElementById('login-page').classList.remove('hidden');
+                    
+                    const errorEl = document.getElementById('login-error');
+                    errorEl.textContent = 'حدث خطأ أثناء تسجيل الدخول. الرجاء المحاولة مرة أخرى.';
+                    errorEl.classList.remove('hidden');
+                }
+            });
+            
+            // Transport Officer navigation
+            document.getElementById('students-btn').addEventListener('click', () => showSection('students-section'));
+            document.getElementById('supervisors-btn').addEventListener('click', () => showSection('supervisors-section'));
+            document.getElementById('drivers-btn').addEventListener('click', () => showSection('drivers-section'));
+            document.getElementById('buses-btn').addEventListener('click', () => showSection('buses-section'));
+            
+            // Manager navigation
+            document.getElementById('manager-students-btn').addEventListener('click', () => showSection('manager-students-section'));
+            document.getElementById('manager-supervisors-btn').addEventListener('click', () => showSection('manager-supervisors-section'));
+            document.getElementById('manager-drivers-btn').addEventListener('click', () => showSection('manager-drivers-section'));
+            document.getElementById('manager-buses-btn').addEventListener('click', () => showSection('manager-buses-section'));
+            
+            // Logout handlers
+            document.getElementById('logout-btn').addEventListener('click', function() {
+                document.getElementById('transport-dashboard').classList.add('hidden');
+                document.getElementById('login-page').classList.remove('hidden');
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+                document.getElementById('login-error').classList.add('hidden');
+            });
+            
+            document.getElementById('manager-logout-btn').addEventListener('click', function() {
+                document.getElementById('manager-dashboard').classList.add('hidden');
+                document.getElementById('login-page').classList.remove('hidden');
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+                document.getElementById('login-error').classList.add('hidden');
+            });
+            
+            // Students Import/Export
+            document.getElementById('import-students-excel').addEventListener('click', function() {
+                document.getElementById('student-excel-file').click();
+            });
+            
+            document.getElementById('student-excel-file').addEventListener('change', function(e) {
+                if (e.target.files.length) {
+                    importExcelFile(e.target.files[0], 'students');
+                    this.value = ''; // Reset the input
+                }
+            });
+            
+            document.getElementById('export-students-excel').addEventListener('click', function() {
+                exportTableToExcel('students-table', 'students_data');
+            });
+            
+            document.getElementById('manager-export-students').addEventListener('click', function() {
+                exportTableToExcel('manager-students-table', 'students_data');
+            });
+            
+            // Supervisors CRUD
+            document.getElementById('add-supervisor').addEventListener('click', addSupervisor);
+            document.getElementById('update-supervisor').addEventListener('click', updateSupervisor);
+            document.getElementById('cancel-supervisor-edit').addEventListener('click', function() {
+                // Reset form
+                document.getElementById('supervisor-id').value = '';
+                document.getElementById('supervisor-name').value = '';
+                document.getElementById('supervisor-permit-expiry').value = '';
+                document.getElementById('supervisor-contract-expiry').value = '';
+                
+                // Show add button, hide update and cancel buttons
+                document.getElementById('add-supervisor').classList.remove('hidden');
+                document.getElementById('update-supervisor').classList.add('hidden');
+                document.getElementById('cancel-supervisor-edit').classList.add('hidden');
+                
+                // Enable ID field
+                document.getElementById('supervisor-id').removeAttribute('readonly');
+                document.getElementById('supervisor-id').classList.remove('bg-gray-100', 'dark:bg-gray-600');
+            });
+            
+            document.getElementById('search-supervisors').addEventListener('input', function() {
+                fetchSupervisorsData(this.value);
+            });
+            
+            document.getElementById('import-supervisors-excel').addEventListener('click', function() {
+                document.getElementById('supervisor-excel-file').click();
+            });
+            
+            document.getElementById('supervisor-excel-file').addEventListener('change', function(e) {
+                if (e.target.files.length) {
+                    importExcelFile(e.target.files[0], 'supervisors');
+                    this.value = ''; // Reset the input
+                }
+            });
+            
+            document.getElementById('export-supervisors-excel').addEventListener('click', function() {
+                exportTableToExcel('supervisors-table', 'supervisors_data');
+            });
+            
+            document.getElementById('manager-export-supervisors').addEventListener('click', function() {
+                exportTableToExcel('manager-supervisors-table', 'supervisors_data');
+            });
+            
+            // Drivers CRUD
+            document.getElementById('add-driver').addEventListener('click', addDriver);
+            document.getElementById('update-driver').addEventListener('click', updateDriver);
+            document.getElementById('cancel-driver-edit').addEventListener('click', function() {
+                // Reset form
+                document.getElementById('driver-id').value = '';
+                document.getElementById('driver-name').value = '';
+                document.getElementById('driver-permit-expiry').value = '';
+                document.getElementById('driver-contract-expiry').value = '';
+                
+                // Show add button, hide update and cancel buttons
+                document.getElementById('add-driver').classList.remove('hidden');
+                document.getElementById('update-driver').classList.add('hidden');
+                document.getElementById('cancel-driver-edit').classList.add('hidden');
+                
+                // Enable ID field
+                document.getElementById('driver-id').removeAttribute('readonly');
+                document.getElementById('driver-id').classList.remove('bg-gray-100', 'dark:bg-gray-600');
+            });
+            
+            document.getElementById('search-drivers').addEventListener('input', function() {
+                fetchDriversData(this.value);
+            });
+            
+            document.getElementById('import-drivers-excel').addEventListener('click', function() {
+                document.getElementById('driver-excel-file').click();
+            });
+            
+            document.getElementById('driver-excel-file').addEventListener('change', function(e) {
+                if (e.target.files.length) {
+                    importExcelFile(e.target.files[0], 'drivers');
+                    this.value = ''; // Reset the input
+                }
+            });
+            
+            document.getElementById('export-drivers-excel').addEventListener('click', function() {
+                exportTableToExcel('drivers-table', 'drivers_data');
+            });
+            
+            document.getElementById('manager-export-drivers').addEventListener('click', function() {
+                exportTableToExcel('manager-drivers-table', 'drivers_data');
+            });
+            
+            // Buses CRUD
+            document.getElementById('add-bus').addEventListener('click', addBus);
+            document.getElementById('update-bus').addEventListener('click', updateBus);
+            document.getElementById('cancel-bus-edit').addEventListener('click', function() {
+                // Reset form
+                document.getElementById('bus-id').value = '';
+                document.getElementById('bus-dot').value = '';
+                document.getElementById('bus-permit-expiry').value = '';
+                
+                // Show add button, hide update and cancel buttons
+                document.getElementById('add-bus').classList.remove('hidden');
+                document.getElementById('update-bus').classList.add('hidden');
+                document.getElementById('cancel-bus-edit').classList.add('hidden');
+                
+                // Enable ID field
+                document.getElementById('bus-id').removeAttribute('readonly');
+                document.getElementById('bus-id').classList.remove('bg-gray-100', 'dark:bg-gray-600');
+            });
+            
+            document.getElementById('search-buses').addEventListener('input', function() {
+                fetchBusesData(this.value);
+            });
+            
+            document.getElementById('import-buses-excel').addEventListener('click', function() {
+                document.getElementById('bus-excel-file').click();
+            });
+            
+            document.getElementById('bus-excel-file').addEventListener('change', function(e) {
+                if (e.target.files.length) {
+                    importExcelFile(e.target.files[0], 'buses');
+                    this.value = ''; // Reset the input
+                }
+            });
+            
+            document.getElementById('export-buses-excel').addEventListener('click', function() {
+                exportTableToExcel('buses-table', 'buses_data');
+            });
+            
+            document.getElementById('manager-export-buses').addEventListener('click', function() {
+                exportTableToExcel('manager-buses-table', 'buses_data');
+            });
+            
+            // Notifications handling
+            document.getElementById('notification-badge').addEventListener('click', function() {
+                document.getElementById('notifications-modal').classList.remove('hidden');
+            });
+            
+            document.getElementById('close-notifications').addEventListener('click', function() {
+                document.getElementById('notifications-modal').classList.add('hidden');
+            });
+            
+            // Close notifications modal when clicking outside
+            document.getElementById('notifications-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+                }
+            });
+            
+            // Automatic periodic checks (every 6 hours in a real app)
+            setInterval(() => {
+                checkExpirations();
+            }, 60 * 60 * 1000); // 1 hour for demo purposes
+        });
+    </script>
+</body>
+</html>
