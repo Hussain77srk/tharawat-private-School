@@ -359,6 +359,58 @@
                 <!-- Students Section -->
                 <div id="students-section" class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 hidden">
                     <h2 class="text-xl font-bold mb-4 border-r-4 border-primary-500 pr-3">الطلاب المسموح لهم بركوب الباص</h2>
+                    
+                    <div class="mb-6 bg-gray-50 dark:bg-gray-700/50 p-5 rounded-lg shadow-sm">
+                        <h3 class="text-lg font-medium mb-3 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            إضافة / تعديل طالب
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">رقم الطالب</label>
+                                <input type="text" id="student-id" class="text-base">
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">اسم الطالب</label>
+                                <input type="text" id="student-name" class="text-base">
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">الصف</label>
+                                <input type="text" id="student-grade" class="text-base">
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">رقم الحافلة</label>
+                                <input type="text" id="student-bus-number" class="text-base">
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">المنطقة</label>
+                                <input type="text" id="student-area" class="text-base">
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button id="add-student" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                إضافة
+                            </button>
+                            <button id="update-student" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 hidden flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                تحديث
+                            </button>
+                            <button id="cancel-student-edit" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 hidden flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                إلغاء
+                            </button>
+                        </div>
+                    </div>
+                    
                     <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
                         <div class="flex flex-wrap gap-2">
                             <button id="import-students-excel" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center">
@@ -373,6 +425,14 @@
                                 </svg>
                                 تصدير إلى Excel
                             </button>
+                        </div>
+                        <div class="w-full md:w-1/3 relative">
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                            <input type="text" id="search-students" class="text-base pr-10" placeholder="بحث...">
                         </div>
                         <div class="text-lg font-medium flex items-center">
                             <span class="bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 py-1 px-3 rounded-full flex items-center">
@@ -392,13 +452,14 @@
                                     <th>اسم الطالب</th>
                                     <th>الصف</th>
                                     <th>رقم الحافلة</th>
-                                    <th class="rounded-tl-lg">المنطقة</th>
+                                    <th>المنطقة</th>
+                                    <th class="rounded-tl-lg">الإجراءات</th>
                                 </tr>
                             </thead>
                             <tbody id="students-table-body">
                                 <!-- Student data will be populated here -->
                                 <tr id="students-loading-row">
-                                    <td colspan="5" class="text-center py-8">
+                                    <td colspan="6" class="text-center py-8">
                                         <div class="animate-pulse flex justify-center items-center">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
@@ -796,7 +857,21 @@
                 <!-- Manager Students View -->
                 <div id="manager-students-section" class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 hidden">
                     <h2 class="text-xl font-bold mb-4 border-r-4 border-primary-500 pr-3">الطلاب المسموح لهم بركوب الباص</h2>
-                    <div class="flex justify-between items-center mb-4">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                        <button id="manager-export-students" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                            </svg>
+                            تصدير إلى Excel
+                        </button>
+                        <div class="w-full md:w-1/3 relative">
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                            <input type="text" id="search-manager-students" class="text-base pr-10" placeholder="بحث...">
+                        </div>
                         <div class="text-lg font-medium flex items-center">
                             <span class="bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 py-1 px-3 rounded-full flex items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -805,12 +880,6 @@
                                 إجمالي الطلاب: <span id="manager-student-count" class="font-bold">0</span>
                             </span>
                         </div>
-                        <button id="manager-export-students" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                            </svg>
-                            تصدير إلى Excel
-                        </button>
                     </div>
                     <div class="overflow-x-auto mt-4 max-h-[65vh] overflow-y-auto rounded-lg shadow">
                         <table id="manager-students-table" class="data-table">
@@ -1385,14 +1454,28 @@
         // Firebase Data Functions
         /**
          * Obtiene los datos de estudiantes desde Firebase y actualiza la interfaz
+         * @param {string} searchTerm - Término para filtrar los resultados (opcional)
          */
-        async function fetchStudentsData() {
+        async function fetchStudentsData(searchTerm = '') {
             try {
                 showSyncStatus(true);
                 
                 // Clear tables
                 document.getElementById('students-table-body').innerHTML = `
                     <tr id="students-loading-row">
+                        <td colspan="6" class="text-center py-8">
+                            <div class="animate-pulse flex justify-center items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                </svg>
+                                <span class="mr-3 text-lg">جاري تحميل البيانات...</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                
+                document.getElementById('manager-students-table-body').innerHTML = `
+                    <tr id="manager-students-loading-row">
                         <td colspan="5" class="text-center py-8">
                             <div class="animate-pulse flex justify-center items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1404,18 +1487,20 @@
                     </tr>
                 `;
                 
-                document.getElementById('manager-students-table-body').innerHTML = document.getElementById('students-table-body').innerHTML;
-                
                 // Get students data
                 const snapshot = await studentsRef.orderBy('id').get();
                 
                 if (snapshot.empty) {
                     document.getElementById('students-table-body').innerHTML = `
                         <tr>
+                            <td colspan="6" class="text-center py-4">لا توجد بيانات للعرض. يمكنك استيراد البيانات من ملف Excel.</td>
+                        </tr>
+                    `;
+                    document.getElementById('manager-students-table-body').innerHTML = `
+                        <tr>
                             <td colspan="5" class="text-center py-4">لا توجد بيانات للعرض. يمكنك استيراد البيانات من ملف Excel.</td>
                         </tr>
                     `;
-                    document.getElementById('manager-students-table-body').innerHTML = document.getElementById('students-table-body').innerHTML;
                     
                     document.getElementById('student-count').textContent = '0';
                     document.getElementById('manager-student-count').textContent = '0';
@@ -1432,6 +1517,20 @@
                     const data = doc.data();
                     students.push(data);
                     
+                    // Apply search filter if term exists
+                    if (searchTerm) {
+                        const term = searchTerm.toLowerCase();
+                        const idMatch = data.id.toString().toLowerCase().includes(term);
+                        const nameMatch = data.name.toLowerCase().includes(term);
+                        const gradeMatch = data.grade.toLowerCase().includes(term);
+                        const busNumberMatch = data.busNumber.toString().toLowerCase().includes(term);
+                        const areaMatch = data.area.toLowerCase().includes(term);
+                        
+                        if (!idMatch && !nameMatch && !gradeMatch && !busNumberMatch && !areaMatch) {
+                            return; // Skip this item
+                        }
+                    }
+                    
                     // Create row for transport officer view
                     const row = document.createElement('tr');
                     row.innerHTML = `
@@ -1440,12 +1539,48 @@
                         <td>${data.grade}</td>
                         <td>${data.busNumber}</td>
                         <td>${data.area}</td>
+                        <td>
+                            <div class="flex space-x-2 space-x-reverse">
+                                <button class="edit-student px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600" data-id="${data.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                </button>
+                                <button class="delete-student px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600" data-id="${data.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
                     `;
                     document.getElementById('students-table-body').appendChild(row);
                     
                     // Create row for manager view
-                    const managerRow = row.cloneNode(true);
+                    const managerRow = document.createElement('tr');
+                    managerRow.innerHTML = `
+                        <td>${data.id}</td>
+                        <td>${data.name}</td>
+                        <td>${data.grade}</td>
+                        <td>${data.busNumber}</td>
+                        <td>${data.area}</td>
+                    `;
                     document.getElementById('manager-students-table-body').appendChild(managerRow);
+                });
+                
+                // Add event listeners to edit and delete buttons for students
+                document.querySelectorAll('.edit-student').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        editStudent(id);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-student').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        deleteStudent(id);
+                    });
                 });
                 
                 // Update counts
@@ -1458,10 +1593,14 @@
                 // Show error message
                 document.getElementById('students-table-body').innerHTML = `
                     <tr>
+                        <td colspan="6" class="text-center py-4 text-red-500">حدث خطأ أثناء تحميل البيانات. الرجاء المحاولة مرة أخرى.</td>
+                    </tr>
+                `;
+                document.getElementById('manager-students-table-body').innerHTML = `
+                    <tr>
                         <td colspan="5" class="text-center py-4 text-red-500">حدث خطأ أثناء تحميل البيانات. الرجاء المحاولة مرة أخرى.</td>
                     </tr>
                 `;
-                document.getElementById('manager-students-table-body').innerHTML = document.getElementById('students-table-body').innerHTML;
             } finally {
                 showSyncStatus(false);
             }
@@ -1935,6 +2074,182 @@
         }
         
         // Add/Edit/Delete Functions
+        /**
+         * Añade un nuevo estudiante a la base de datos
+         */
+        async function addStudent() {
+            const id = document.getElementById('student-id').value;
+            const name = document.getElementById('student-name').value;
+            const grade = document.getElementById('student-grade').value;
+            const busNumber = document.getElementById('student-bus-number').value;
+            const area = document.getElementById('student-area').value;
+            
+            if (!id || !name || !grade || !busNumber || !area) {
+                showToast("يرجى ملء جميع الحقول المطلوبة", "error");
+                return;
+            }
+            
+            showSyncStatus(true);
+            
+            try {
+                // Check if ID already exists
+                const docSnapshot = await studentsRef.doc(id).get();
+                
+                if (docSnapshot.exists) {
+                    showToast("رقم الطالب موجود بالفعل", "error");
+                    showSyncStatus(false);
+                    return;
+                }
+                
+                // Add new student
+                await studentsRef.doc(id).set({
+                    id,
+                    name,
+                    grade,
+                    busNumber,
+                    area,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Clear form
+                document.getElementById('student-id').value = '';
+                document.getElementById('student-name').value = '';
+                document.getElementById('student-grade').value = '';
+                document.getElementById('student-bus-number').value = '';
+                document.getElementById('student-area').value = '';
+                
+                // Refresh data
+                await fetchStudentsData();
+                
+                showToast("تمت إضافة الطالب بنجاح", "success");
+            } catch (error) {
+                console.error("Error adding student:", error);
+                showToast("حدث خطأ أثناء إضافة الطالب", "error");
+            } finally {
+                showSyncStatus(false);
+            }
+        }
+        
+        /**
+         * Carga los datos de un estudiante para edición
+         * @param {string} id - ID del estudiante a editar
+         */
+        async function editStudent(id) {
+            showSyncStatus(true);
+            
+            try {
+                const docSnapshot = await studentsRef.doc(id).get();
+                
+                if (!docSnapshot.exists) {
+                    showToast("لم يتم العثور على بيانات الطالب", "error");
+                    return;
+                }
+                
+                const student = docSnapshot.data();
+                
+                document.getElementById('student-id').value = student.id;
+                document.getElementById('student-name').value = student.name;
+                document.getElementById('student-grade').value = student.grade;
+                document.getElementById('student-bus-number').value = student.busNumber;
+                document.getElementById('student-area').value = student.area;
+                
+                // Show update and cancel buttons, hide add button
+                document.getElementById('add-student').classList.add('hidden');
+                document.getElementById('update-student').classList.remove('hidden');
+                document.getElementById('cancel-student-edit').classList.remove('hidden');
+                
+                // Disable ID field during edit
+                document.getElementById('student-id').setAttribute('readonly', true);
+                document.getElementById('student-id').classList.add('bg-gray-100', 'dark:bg-gray-600');
+                
+                // Scroll to form
+                document.querySelector('#students-section .mb-6').scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                console.error("Error fetching student for edit:", error);
+                showToast("حدث خطأ أثناء تحميل بيانات الطالب", "error");
+            } finally {
+                showSyncStatus(false);
+            }
+        }
+        
+        /**
+         * Actualiza los datos de un estudiante en la base de datos
+         */
+        async function updateStudent() {
+            const id = document.getElementById('student-id').value;
+            const name = document.getElementById('student-name').value;
+            const grade = document.getElementById('student-grade').value;
+            const busNumber = document.getElementById('student-bus-number').value;
+            const area = document.getElementById('student-area').value;
+            
+            if (!id || !name || !grade || !busNumber || !area) {
+                showToast("يرجى ملء جميع الحقول المطلوبة", "error");
+                return;
+            }
+            
+            showSyncStatus(true);
+            
+            try {
+                // Update student
+                await studentsRef.doc(id).update({
+                    name,
+                    grade,
+                    busNumber,
+                    area,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Reset form
+                document.getElementById('student-id').value = '';
+                document.getElementById('student-name').value = '';
+                document.getElementById('student-grade').value = '';
+                document.getElementById('student-bus-number').value = '';
+                document.getElementById('student-area').value = '';
+                
+                // Show add button, hide update and cancel buttons
+                document.getElementById('add-student').classList.remove('hidden');
+                document.getElementById('update-student').classList.add('hidden');
+                document.getElementById('cancel-student-edit').classList.add('hidden');
+                
+                // Enable ID field
+                document.getElementById('student-id').removeAttribute('readonly');
+                document.getElementById('student-id').classList.remove('bg-gray-100', 'dark:bg-gray-600');
+                
+                // Refresh data
+                await fetchStudentsData();
+                
+                showToast("تم تحديث بيانات الطالب بنجاح", "success");
+            } catch (error) {
+                console.error("Error updating student:", error);
+                showToast("حدث خطأ أثناء تحديث بيانات الطالب", "error");
+            } finally {
+                showSyncStatus(false);
+            }
+        }
+        
+        /**
+         * Elimina un estudiante de la base de datos
+         * @param {string} id - ID del estudiante a eliminar
+         */
+        async function deleteStudent(id) {
+            if (confirm('هل أنت متأكد من حذف هذا الطالب؟')) {
+                showSyncStatus(true);
+                
+                try {
+                    await studentsRef.doc(id).delete();
+                    
+                    // Refresh data
+                    await fetchStudentsData();
+                    showToast("تم حذف الطالب بنجاح", "success");
+                } catch (error) {
+                    console.error("Error deleting student:", error);
+                    showToast("حدث خطأ أثناء حذف الطالب", "error");
+                } finally {
+                    showSyncStatus(false);
+                }
+            }
+        }
+        
         /**
          * Añade un nuevo supervisor a la base de datos
          */
@@ -2785,6 +3100,35 @@
                 document.getElementById('username').value = '';
                 document.getElementById('password').value = '';
                 document.getElementById('login-error').classList.add('hidden');
+            });
+            
+            // Students Functions
+            document.getElementById('add-student').addEventListener('click', addStudent);
+            document.getElementById('update-student').addEventListener('click', updateStudent);
+            document.getElementById('cancel-student-edit').addEventListener('click', function() {
+                // Reset form
+                document.getElementById('student-id').value = '';
+                document.getElementById('student-name').value = '';
+                document.getElementById('student-grade').value = '';
+                document.getElementById('student-bus-number').value = '';
+                document.getElementById('student-area').value = '';
+                
+                // Show add button, hide update and cancel buttons
+                document.getElementById('add-student').classList.remove('hidden');
+                document.getElementById('update-student').classList.add('hidden');
+                document.getElementById('cancel-student-edit').classList.add('hidden');
+                
+                // Enable ID field
+                document.getElementById('student-id').removeAttribute('readonly');
+                document.getElementById('student-id').classList.remove('bg-gray-100', 'dark:bg-gray-600');
+            });
+            
+            document.getElementById('search-students').addEventListener('input', function() {
+                fetchStudentsData(this.value);
+            });
+            
+            document.getElementById('search-manager-students').addEventListener('input', function() {
+                fetchStudentsData(this.value);
             });
             
             // Students Import/Export
