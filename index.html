@@ -502,11 +502,11 @@
                             </div>
                             <div>
                                 <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">تاريخ انتهاء التصريح</label>
-                                <input type="date" id="supervisor-permit-expiry" class="text-base">
+                                <input type="text" id="supervisor-permit-expiry" class="text-base" placeholder="YYYY-MM-DD">
                             </div>
                             <div>
                                 <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">تاريخ انتهاء العقد</label>
-                                <input type="date" id="supervisor-contract-expiry" class="text-base">
+                                <input type="text" id="supervisor-contract-expiry" class="text-base" placeholder="YYYY-MM-DD">
                             </div>
                         </div>
                         <div class="flex flex-wrap gap-2">
@@ -553,6 +553,14 @@
                                 </svg>
                             </div>
                             <input type="text" id="search-supervisors" class="text-base pr-10" placeholder="بحث...">
+                        </div>
+                        <div class="text-lg font-medium flex items-center">
+                            <span class="bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 py-1 px-3 rounded-full flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                إجمالي المشرفات: <span id="supervisor-count" class="font-bold">0</span>
+                            </span>
                         </div>
                     </div>
                     <input type="file" id="supervisor-excel-file" class="hidden" accept=".xlsx, .xls">
@@ -616,11 +624,11 @@
                             </div>
                             <div>
                                 <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">تاريخ انتهاء التصريح</label>
-                                <input type="date" id="driver-permit-expiry" class="text-base">
+                                <input type="text" id="driver-permit-expiry" class="text-base" placeholder="YYYY-MM-DD">
                             </div>
                             <div>
                                 <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">تاريخ انتهاء العقد</label>
-                                <input type="date" id="driver-contract-expiry" class="text-base">
+                                <input type="text" id="driver-contract-expiry" class="text-base" placeholder="YYYY-MM-DD">
                             </div>
                         </div>
                         <div class="flex flex-wrap gap-2">
@@ -667,6 +675,14 @@
                                 </svg>
                             </div>
                             <input type="text" id="search-drivers" class="text-base pr-10" placeholder="بحث...">
+                        </div>
+                        <div class="text-lg font-medium flex items-center">
+                            <span class="bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 py-1 px-3 rounded-full flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                إجمالي السائقين: <span id="driver-count" class="font-bold">0</span>
+                            </span>
                         </div>
                     </div>
                     <input type="file" id="driver-excel-file" class="hidden" accept=".xlsx, .xls">
@@ -723,7 +739,7 @@
                             </div>
                             <div>
                                 <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">تاريخ انتهاء التصريح</label>
-                                <input type="date" id="bus-permit-expiry" class="text-base">
+                                <input type="text" id="bus-permit-expiry" class="text-base" placeholder="YYYY-MM-DD">
                             </div>
                         </div>
                         <div class="flex flex-wrap gap-2">
@@ -770,6 +786,14 @@
                                 </svg>
                             </div>
                             <input type="text" id="search-buses" class="text-base pr-10" placeholder="بحث...">
+                        </div>
+                        <div class="text-lg font-medium flex items-center">
+                            <span class="bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 py-1 px-3 rounded-full flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                                </svg>
+                                إجمالي الحافلات: <span id="bus-count" class="font-bold">0</span>
+                            </span>
                         </div>
                     </div>
                     <input type="file" id="bus-excel-file" class="hidden" accept=".xlsx, .xls">
@@ -1657,6 +1681,7 @@
                         </tr>
                     `;
                     
+                    document.getElementById('supervisor-count').textContent = '0';
                     document.getElementById('manager-supervisor-count').textContent = '0';
                     return;
                 }
@@ -1740,6 +1765,7 @@
                 });
                 
                 // Update count
+                document.getElementById('supervisor-count').textContent = supervisors.length;
                 document.getElementById('manager-supervisor-count').textContent = supervisors.length;
             } catch (error) {
                 console.error("Error fetching supervisors:", error);
@@ -1814,6 +1840,7 @@
                         </tr>
                     `;
                     
+                    document.getElementById('driver-count').textContent = '0';
                     document.getElementById('manager-driver-count').textContent = '0';
                     return;
                 }
@@ -1897,6 +1924,7 @@
                 });
                 
                 // Update count
+                document.getElementById('driver-count').textContent = drivers.length;
                 document.getElementById('manager-driver-count').textContent = drivers.length;
             } catch (error) {
                 console.error("Error fetching drivers:", error);
@@ -1971,6 +1999,7 @@
                         </tr>
                     `;
                     
+                    document.getElementById('bus-count').textContent = '0';
                     document.getElementById('manager-bus-count').textContent = '0';
                     return;
                 }
@@ -2050,6 +2079,7 @@
                 });
                 
                 // Update count
+                document.getElementById('bus-count').textContent = buses.length;
                 document.getElementById('manager-bus-count').textContent = buses.length;
             } catch (error) {
                 console.error("Error fetching buses:", error);
@@ -2157,10 +2187,6 @@
                 document.getElementById('update-student').classList.remove('hidden');
                 document.getElementById('cancel-student-edit').classList.remove('hidden');
                 
-                // Disable ID field during edit
-                document.getElementById('student-id').setAttribute('readonly', true);
-                document.getElementById('student-id').classList.add('bg-gray-100', 'dark:bg-gray-600');
-                
                 // Scroll to form
                 document.querySelector('#students-section .mb-6').scrollIntoView({ behavior: 'smooth' });
             } catch (error) {
@@ -2191,6 +2217,7 @@
             try {
                 // Update student
                 await studentsRef.doc(id).update({
+                    id,
                     name,
                     grade,
                     busNumber,
@@ -2209,10 +2236,6 @@
                 document.getElementById('add-student').classList.remove('hidden');
                 document.getElementById('update-student').classList.add('hidden');
                 document.getElementById('cancel-student-edit').classList.add('hidden');
-                
-                // Enable ID field
-                document.getElementById('student-id').removeAttribute('readonly');
-                document.getElementById('student-id').classList.remove('bg-gray-100', 'dark:bg-gray-600');
                 
                 // Refresh data
                 await fetchStudentsData();
@@ -2333,10 +2356,6 @@
                 document.getElementById('update-supervisor').classList.remove('hidden');
                 document.getElementById('cancel-supervisor-edit').classList.remove('hidden');
                 
-                // Disable ID field during edit
-                document.getElementById('supervisor-id').setAttribute('readonly', true);
-                document.getElementById('supervisor-id').classList.add('bg-gray-100', 'dark:bg-gray-600');
-                
                 // Scroll to form
                 document.querySelector('#supervisors-section .mb-6').scrollIntoView({ behavior: 'smooth' });
             } catch (error) {
@@ -2367,6 +2386,7 @@
             try {
                 // Update supervisor
                 await supervisorsRef.doc(id).update({
+                    id,
                     name,
                     gender,
                     permitExpiry,
@@ -2384,10 +2404,6 @@
                 document.getElementById('add-supervisor').classList.remove('hidden');
                 document.getElementById('update-supervisor').classList.add('hidden');
                 document.getElementById('cancel-supervisor-edit').classList.add('hidden');
-                
-                // Enable ID field
-                document.getElementById('supervisor-id').removeAttribute('readonly');
-                document.getElementById('supervisor-id').classList.remove('bg-gray-100', 'dark:bg-gray-600');
                 
                 // Refresh data
                 await fetchSupervisorsData();
@@ -2509,10 +2525,6 @@
                 document.getElementById('update-driver').classList.remove('hidden');
                 document.getElementById('cancel-driver-edit').classList.remove('hidden');
                 
-                // Disable ID field during edit
-                document.getElementById('driver-id').setAttribute('readonly', true);
-                document.getElementById('driver-id').classList.add('bg-gray-100', 'dark:bg-gray-600');
-                
                 // Scroll to form
                 document.querySelector('#drivers-section .mb-6').scrollIntoView({ behavior: 'smooth' });
             } catch (error) {
@@ -2543,6 +2555,7 @@
             try {
                 // Update driver
                 await driversRef.doc(id).update({
+                    id,
                     name,
                     gender,
                     permitExpiry,
@@ -2560,10 +2573,6 @@
                 document.getElementById('add-driver').classList.remove('hidden');
                 document.getElementById('update-driver').classList.add('hidden');
                 document.getElementById('cancel-driver-edit').classList.add('hidden');
-                
-                // Enable ID field
-                document.getElementById('driver-id').removeAttribute('readonly');
-                document.getElementById('driver-id').classList.remove('bg-gray-100', 'dark:bg-gray-600');
                 
                 // Refresh data
                 await fetchDriversData();
@@ -2678,10 +2687,6 @@
                 document.getElementById('update-bus').classList.remove('hidden');
                 document.getElementById('cancel-bus-edit').classList.remove('hidden');
                 
-                // Disable ID field during edit
-                document.getElementById('bus-id').setAttribute('readonly', true);
-                document.getElementById('bus-id').classList.add('bg-gray-100', 'dark:bg-gray-600');
-                
                 // Scroll to form
                 document.querySelector('#buses-section .mb-6').scrollIntoView({ behavior: 'smooth' });
             } catch (error) {
@@ -2710,6 +2715,7 @@
             try {
                 // Update bus
                 await busesRef.doc(id).update({
+                    id,
                     dot,
                     permitExpiry,
                     lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
@@ -2724,10 +2730,6 @@
                 document.getElementById('add-bus').classList.remove('hidden');
                 document.getElementById('update-bus').classList.add('hidden');
                 document.getElementById('cancel-bus-edit').classList.add('hidden');
-                
-                // Enable ID field
-                document.getElementById('bus-id').removeAttribute('readonly');
-                document.getElementById('bus-id').classList.remove('bg-gray-100', 'dark:bg-gray-600');
                 
                 // Refresh data
                 await fetchBusesData();
@@ -3116,10 +3118,6 @@
                 document.getElementById('add-student').classList.remove('hidden');
                 document.getElementById('update-student').classList.add('hidden');
                 document.getElementById('cancel-student-edit').classList.add('hidden');
-                
-                // Enable ID field
-                document.getElementById('student-id').removeAttribute('readonly');
-                document.getElementById('student-id').classList.remove('bg-gray-100', 'dark:bg-gray-600');
             });
             
             document.getElementById('search-students').addEventListener('input', function() {
@@ -3164,10 +3162,6 @@
                 document.getElementById('add-supervisor').classList.remove('hidden');
                 document.getElementById('update-supervisor').classList.add('hidden');
                 document.getElementById('cancel-supervisor-edit').classList.add('hidden');
-                
-                // Enable ID field
-                document.getElementById('supervisor-id').removeAttribute('readonly');
-                document.getElementById('supervisor-id').classList.remove('bg-gray-100', 'dark:bg-gray-600');
             });
             
             document.getElementById('search-supervisors').addEventListener('input', function() {
@@ -3207,10 +3201,6 @@
                 document.getElementById('add-driver').classList.remove('hidden');
                 document.getElementById('update-driver').classList.add('hidden');
                 document.getElementById('cancel-driver-edit').classList.add('hidden');
-                
-                // Enable ID field
-                document.getElementById('driver-id').removeAttribute('readonly');
-                document.getElementById('driver-id').classList.remove('bg-gray-100', 'dark:bg-gray-600');
             });
             
             document.getElementById('search-drivers').addEventListener('input', function() {
@@ -3249,10 +3239,6 @@
                 document.getElementById('add-bus').classList.remove('hidden');
                 document.getElementById('update-bus').classList.add('hidden');
                 document.getElementById('cancel-bus-edit').classList.add('hidden');
-                
-                // Enable ID field
-                document.getElementById('bus-id').removeAttribute('readonly');
-                document.getElementById('bus-id').classList.remove('bg-gray-100', 'dark:bg-gray-600');
             });
             
             document.getElementById('search-buses').addEventListener('input', function() {
